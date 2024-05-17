@@ -36,6 +36,9 @@ const EventFetching = () => {
     }, []);
 
     const dateTimeFormat = new Intl.DateTimeFormat('cz', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const getLocationName = (address) => {
+        return address.split(',')[0]; // Split the address by comma and return the first part
+    }
 
     return (
         <div>
@@ -47,11 +50,11 @@ const EventFetching = () => {
                     <p>Konec: {dateTimeFormat.format(new Date(event.end.dateTime))}</p>
                     {event.location ? (
                         <>
-                            <p>Místo: {event.location}</p>
+                            <p>Místo: {getLocationName(event.location)}</p> {/* Use the new function here */}
                             {event.lat && event.lng && (
                                 <p>
                                     <a href={`https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`} target="_blank" rel="noopener noreferrer">
-                                        Zobrazit na Google Maps
+                                        Zobrazit na mapě
                                     </a>
                                 </p>
                             )}

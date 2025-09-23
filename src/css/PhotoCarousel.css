@@ -1,0 +1,94 @@
+/* Matches the dark palette you picked earlier; uses your CSS variables when present */
+:root{
+    --hero-height: clamp(360px, 60vh, 700px); /* was 280px,48vh,520px */
+    --hero-radius: 18px;
+    --hero-dot: rgba(255,255,255,.55);
+    --hero-dot-active: var(--accent, #60a5fa);
+}
+
+body{
+    margin: 0; padding: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    color: var(--text, #e6edf3);
+}
+
+.hero-carousel{
+    position: relative;
+    height: var(--hero-height);
+    border-radius: var(--hero-radius);
+    overflow: hidden;
+
+    background: #0b111f; /* fallback while images load */
+}
+
+/* Slides */
+.hero-slide{
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0; transform: scale(1.03);
+    transition: opacity .7s ease, transform 1.2s ease;
+    will-change: opacity, transform;
+}
+.hero-slide.is-active{
+    opacity: 1; transform: scale(1.0);
+}
+
+/* Gradient overlay for contrast */
+.hero-overlay{
+    position:absolute; inset:0;
+    background:
+            linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.35) 38%, rgba(0,0,0,.25) 62%, rgba(0,0,0,.20)),
+            radial-gradient(100% 120% at 50% 0%, rgba(0,0,0,.35), rgba(0,0,0,0) 60%);
+}
+
+/* Content */
+.hero-content{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding: 0 18px;
+    color: var(--text, #e6edf3);
+}
+.hero-title{
+    margin: 0 0 6px;
+    font-size: clamp(28px, 4.3vw, 52px);
+    font-weight: 800; letter-spacing:.3px;
+    text-shadow: 0 2px 16px rgba(0,0,0,.55);
+}
+.hero-subtitle{
+    margin: 0;
+    font-size: clamp(14px, 1.7vw, 20px);
+    color: var(--muted, #9fb0c2);
+    text-shadow: 0 1px 12px rgba(0,0,0,.45);
+}
+
+/* Dots */
+.hero-dots{
+    position:absolute; left:50%; bottom:18px;
+    transform: translateX(-50%);
+    display:flex; gap:8px;
+}
+.hero-dot{
+    width:10px; height:10px; border-radius:50%;
+    background: var(--hero-dot);
+    border: none; cursor: pointer;
+    transition: transform .15s ease, background .15s ease;
+}
+.hero-dot:hover{ transform: scale(1.15) }
+.hero-dot.active{ background: var(--hero-dot-active) }
+
+/* Wavy bottom edge */
+.hero-wave{
+    position:absolute; left:0; right:0; bottom:-1px;
+    line-height:0; height: 90px; pointer-events:none;
+}
+.hero-wave svg{
+    display:block; width:100%; height:100%;
+}
+
+/* Reduce motion for a11y */
+@media (prefers-reduced-motion: reduce){
+    .hero-slide{ transition: none }
+    .hero-dot{ transition: none }
+}

@@ -1,0 +1,135 @@
+/* EventForm.css – styled to match CalendarView + PublicPage heraldic theme */
+:root {
+    --blue: #115DA8;
+    --blue-2: #0D4784;
+    --red: #D12B2B;
+    --gold: #F2C200;
+    --white: #ffffff;
+    --ink: #0E0E10;
+    --radius: 16px;
+    --shadow: 0 12px 30px rgba(0,0,0,.18);
+}
+
+.event-form-container {
+    max-width: 500px;
+    margin: 2rem auto;
+    background-color: var(--white);
+    border-radius: var(--radius);
+    border: 2.5px solid #111; /* heraldic black outline */
+    box-shadow: var(--shadow);
+    padding: 1.5rem 2rem;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+}
+
+.event-form-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--blue-2);
+    font-size: 1.6rem;
+    font-weight: 900;
+    position: relative;
+}
+.event-form-container h2::after {
+    content: "";
+    display: block;
+    height: 4px;
+    width: 80px;
+    background: linear-gradient(90deg, var(--gold), var(--red));
+    border-radius: 999px;
+    margin: 0.5rem auto 0;
+    box-shadow: 0 4px 12px rgba(242,194,0,.35);
+}
+
+/* Labels */
+.event-form-container label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* Inputs & selects */
+.event-form-container input[type="text"],
+.event-form-container input[type="date"],
+.event-form-container input[type="time"],
+.event-form-container input[type="number"],
+.event-form-container input[type="url"],
+.event-form-container select,
+.event-form-container input[type="file"] {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    margin-bottom: 1rem;
+    border: 2px solid #111;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.event-form-container input:focus,
+.event-form-container select:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(242,194,0,0.35);
+}
+
+/* Suggestions dropdown */
+.event-form-container .suggestions {
+    position: absolute;
+    background: var(--white);
+    border: 2px solid #111;
+    border-radius: 12px;
+    width: calc(100% - 2rem);
+    max-height: 150px;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+    z-index: 10;
+    margin-top: -0.5rem;
+}
+
+.event-form-container .suggestions li {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.event-form-container .suggestions li:hover {
+    background-color: rgba(242,194,0,0.12);
+}
+
+/* Submit button */
+.event-form-container button[type="submit"] {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: linear-gradient(180deg, var(--red), #b61f1f);
+    color: var(--white);
+    font-size: 1.1rem;
+    font-weight: 800;
+    border: 2px solid #111;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(209,43,43,.25);
+    transition: transform 0.1s ease, filter 0.12s ease;
+}
+
+.event-form-container button[type="submit"]:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.04) brightness(1.02);
+}
+
+.event-form-container button[disabled] {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Responsive tweaks */
+@media (max-width: 576px) {
+    .event-form-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+}

@@ -1,0 +1,205 @@
+/* CalendarView.css – Dark, clean, city-events style */
+:root {
+    --bg: #0B111F;         /* Hlavní pozadí */
+    --panel: #1E2E47;      /* Panely */
+    --panel-2: #18263A;    /* Tmavší odstín pro přechody */
+    --card: #1E2E47;       /* Karty */
+    --card-2: #18263A;     /* Druhá barva karet */
+    --muted: #AAB8C6;      /* Tlumená světle šedá/modrá pro text */
+    --text: #E6EDF3;       /* Hlavní text – světle šedobílá */
+    --accent: #3E5972;     /* Akcentní střední modrá */
+    --accent-2: #4E6C87;   /* Světlejší akcent */
+    --ring: 0 0 0 2px rgba(62, 89, 114, .35);
+    --shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+
+
+
+
+
+
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue","Noto Sans",sans-serif}
+
+/* Wrapper */
+.calendar-view .cv-container{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: clamp(16px, 2.5vw, 28px);
+}
+
+/* Filters pill */
+.calendar-view .filter-bar{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid rgba(148,163,184,.18);
+    border-radius:999px;
+    padding:10px 16px;
+    box-shadow:var(--shadow);
+    position:sticky;
+    top:12px;
+    z-index:5;
+    backdrop-filter:saturate(120%) blur(6px);
+    margin-bottom:28px;
+}
+
+.calendar-view .filter-bar select,
+.calendar-view .filter-bar .date-filter{
+    appearance:none;
+    background:var(--card);
+    color:var(--text);
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:10px;
+    padding:10px 12px;
+    min-width: 180px;
+    outline:none;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .02s;
+}
+.calendar-view .filter-bar select:focus,
+.calendar-view .filter-bar .date-filter:focus{ box-shadow: var(--ring); border-color:transparent }
+.calendar-view .filter-bar select:hover,
+.calendar-view .filter-bar .date-filter:hover{ border-color: rgba(148,163,184,.38) }
+
+/* Month block */
+.calendar-view .month-section{ margin-bottom:34px }
+.calendar-view .month-title{
+    font-size: clamp(20px, 2.2vw, 26px);
+    font-weight:700;
+    letter-spacing:.2px;
+    margin: 8px 6px 16px;
+    color:#dbeafe;
+    text-shadow:0 1px 0 rgba(0,0,0,.4);
+    display:flex; align-items:center; gap:10px;
+}
+.calendar-view .month-title::before{
+    content:"";
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 6px rgba(96,165,250,.12);
+}
+
+/* List (one card per row as v diagramu) */
+.calendar-view .grid{
+    display:flex; flex-direction:column;
+    gap:14px;
+}
+
+/* Event card */
+.calendar-view .card{
+    display:grid;
+    grid-template-columns: 140px 1fr;
+    gap:20px;
+    align-items:center;
+    background:linear-gradient(180deg,var(--card),var(--card-2));
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:18px;
+    padding:14px;
+    box-shadow: var(--shadow);
+    cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.calendar-view .card:hover{
+    transform: translateY(-2px);
+    border-color: rgba(125,211,252,.35);
+    box-shadow: 0 10px 28px rgba(2,8,23,.55);
+}
+.calendar-view .card:active{ transform: translateY(0) }
+
+/* Poster left */
+.calendar-view .poster{
+    width: 140px; height: 220px; object-fit: cover;
+    border-radius:20px;
+    border:1px solid rgba(148,163,184,.18);
+    background:#0b0f14;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+}
+
+/* Right side */
+.calendar-view .info{ min-width:0 }
+.calendar-view .info-box{
+    background: rgba(2,6,23,.35);
+    border:1px solid rgba(148,163,184,.16);
+    border-radius:14px;
+    padding:12px 14px;
+}
+
+/* Title & rows */
+.calendar-view .title{
+    margin: 0 0 8px;
+    font-size: clamp(18px, 1.9vw, 22px);
+    line-height:1.25; font-weight:700;
+}
+.calendar-view .icon-row{
+    display:flex; align-items:center; gap:8px;
+    color: var(--muted);
+    padding:6px 0;
+    border-top:1px dashed rgba(148,163,184,.12);
+}
+.calendar-view .icon-row:first-of-type{ border-top:none }
+.calendar-view .icon-row svg{ flex:0 0 auto; opacity:.9 }
+
+/* Modal */
+.calendar-view .modal-bg{
+    position:fixed; inset:0; background:rgba(2,6,23,.75);
+    backdrop-filter: blur(4px); display:grid; place-items:center; z-index:50;
+}
+.calendar-view .modal{
+    width:min(780px, 92vw);
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid rgba(148,163,184,.22);
+    border-radius:18px; padding:18px;
+    box-shadow: var(--shadow);
+}
+.calendar-view .modal h2{ margin:0 0 10px }
+.calendar-view .modal p{ margin:8px 0; color:var(--muted) }
+.calendar-view .modal a{ color: var(--accent); text-decoration: none }
+.calendar-view .modal a:hover{ text-decoration: underline; color: var(--accent-2) }
+.calendar-view .modal-poster{
+    width:100%; height: fit-content; object-fit: cover;
+    border-radius:14px; margin-bottom:12px;
+    border:1px solid rgba(148,163,184,.18);
+}
+.calendar-view .close-button{
+    margin-top:12px; inline-size:100%;
+    padding:10px 12px; border-radius:12px;
+    background: linear-gradient(180deg, #0ea5e9, #3b82f6);
+    color:white; font-weight:700; letter-spacing:.2px; border:none; cursor:pointer;
+    transition: filter .1s ease;
+}
+.calendar-view .close-button:hover{ filter: brightness(1.05) }
+
+/* Datepicker wrapper (ke konzistentní výšce) */
+.calendar-view .date-filter-wrapper{ display:flex }
+.calendar-view .date-filter{
+    min-width: 200px;
+}
+
+/* Small screens */
+@media (max-width: 720px){
+    .calendar-view .card{
+        grid-template-columns: 100px 1fr;
+        padding:12px; gap:12px;
+    }
+    .calendar-view .poster{ width:100px; height:100px; border-radius:14px }
+    .calendar-view .filter-bar{ flex-wrap:wrap; border-radius:18px }
+}
+
+/* Accessibility niceties */
+@media (prefers-reduced-motion: reduce){
+    .calendar-view .card,
+    .calendar-view .filter-bar select,
+    .calendar-view .filter-bar .date-filter { transition: none }
+}
+
+/* Optional nice scrollbars on desktop */
+@media (hover:hover){
+    *{ scrollbar-width: thin; scrollbar-color: #334155 #0b1220 }
+    *::-webkit-scrollbar{ height:10px; width:10px }
+    *::-webkit-scrollbar-thumb{ background:#334155; border-radius:8px }
+    *::-webkit-scrollbar-track{ background:#0b1220 }
+}

@@ -17,35 +17,73 @@ interface Suggestion {
 
 registerLocale('cs', cs);
 
+// --- NEW HELPER FUNCTION TO AVOID TIMEZONE ISSUES ---
+/**
+ * Converts a Date object to a 'YYYY-MM-DD' string based on its local date parts,
+ * ignoring timezone conversions that cause off-by-one-day errors.
+ * @param date The Date object to format.
+ * @returns The formatted date string or an empty string if the date is null.
+ */
+const toLocalDateString = (date: Date | null): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const FB_RESOLVER_ENDPOINT = 'https://us-central1-culture-calendar-4747b.cloudfunctions.net/api/resolve-link';
+
+async function normalizeFacebookUrl(rawUrl: string): Promise<string> {
+    const trimmedUrl = (rawUrl || '').trim();
+    if (!trimmedUrl) return '';
+    const directMatch = trimmedUrl.match(/facebook\.com\/events\/(\d+)/);
+    if (directMatch) {
+        return `https://www.facebook.com/events/${directMatch[1]}/`;
+    }
+    if (trimmedUrl.includes('fb.me')) {
+        try {
+            const response = await fetch(`${FB_RESOLVER_ENDPOINT}?url=${encodeURIComponent(trimmedUrl)}`);
+            if (!response.ok) return trimmedUrl;
+            const data = await response.json();
+            if (data?.resolved) return String(data.resolved);
+            return trimmedUrl;
+        } catch {
+            return trimmedUrl;
+        }
+    }
+    return trimmedUrl;
+}
+
 export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
-    const [form, setForm] = useState<{
-        title: string;
-        category: string;
-        date: Date | null;
-        start: string;
-        price: string;
-        location: string;
-        facebookUrl: string;
-        poster: File | null;
-        lat: number;
-        lng: number;
-    }>({
+    const [form, setForm] = useState({
         title: '',
         category: '',
-        date: null,
+        startDate: null as Date | null,
+        endDate: null as Date | null,
         start: '',
         price: '',
         location: '',
         facebookUrl: '',
-        poster: null,
+        poster: null as File | null,
         lat: 0,
         lng: 0,
     });
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const dropdownRef = useRef<HTMLUListElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
+
+    const resetForm = () => {
+        setForm({
+            title: '', category: '', startDate: null, endDate: null, start: '',
+            price: '', location: '', facebookUrl: '', poster: null, lat: 0, lng: 0,
+        });
+        setSuggestions([]);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     useEffect(() => {
         const controller = new AbortController();
@@ -62,9 +100,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 const data = await resp.json();
                 if (Array.isArray(data.items)) {
                     const list = data.items.map((item: any) => ({
-                        name: item.name,
-                        lat: item.position.lat,
-                        lng: item.position.lon
+                        name: item.name, lat: item.position.lat, lng: item.position.lon,
                     }));
                     setSuggestions(list);
                 } else {
@@ -82,8 +118,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         setForm(prev => ({ ...prev, [name]: value } as any));
     };
 
-    const handleDateChange = (date: Date | null) => {
-        setForm(prev => ({ ...prev, date }));
+    const handleDateChange = (dates: [Date | null, Date | null]) => {
+        const [start, end] = dates;
+        setForm(prev => ({ ...prev, startDate: start, endDate: end }));
     };
 
     const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,23 +138,38 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         e.preventDefault();
         setLoadingSubmit(true);
         try {
+            const normalizedFbUrl = await normalizeFacebookUrl(form.facebookUrl);
+
             let posterUrl = '';
+            let posterPath = '';
             if (form.poster) {
-                const imgRef = ref(storage, `posters/${Date.now()}_${form.poster.name}`);
+                const path = `posters/${Date.now()}_${form.poster.name}`;
+                const imgRef = ref(storage, path);
                 await uploadBytes(imgRef, form.poster);
                 posterUrl = await getDownloadURL(imgRef);
+                posterPath = path;
             }
-            const dateString = form.date ? form.date.toISOString().split('T')[0] : '';
-            const { poster, date, ...rest } = form;
-            const newEvent: Event = {
+
+            // --- FIXED: Use the new timezone-safe helper function ---
+            const startDateString = toLocalDateString(form.startDate);
+            const endDateString = toLocalDateString(form.endDate || form.startDate);
+
+            const { poster, startDate, endDate, ...rest } = form;
+
+            const newEvent: Omit<Event, 'id'> & { posterPath: string } = {
                 ...rest,
-                date: dateString,
+                facebookUrl: normalizedFbUrl,
+                startDate: startDateString,
+                endDate: endDateString,
                 posterUrl,
+                posterPath,
                 status: 'pending',
                 lat: form.lat,
                 lng: form.lng,
             };
+
             await addDoc(collection(db, 'submissions'), newEvent);
+            resetForm();
             setLoadingSubmit(false);
             onSuccess();
         } catch (error) {
@@ -129,10 +181,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     return (
         <div className="event-form-container">
             <form onSubmit={handleSubmit}>
-                <h2>Navrhněte událost</h2>
+                <h2>Přidejte vaší událost</h2>
                 <label>Název:</label>
                 <input name="title" value={form.title} onChange={handleChange} required />
-
                 <label>Kategorie:</label>
                 <select name="category" value={form.category} onChange={handleChange} required>
                     <option value="">Vyberte</option>
@@ -140,37 +191,36 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     <option value="sport">Sport</option>
                     <option value="vzdělávání">Vzdělávání</option>
                 </select>
-
-                <label>Datum:</label>
+                <label>Datum (nebo rozmezí):</label>
                 <ReactDatePicker
-                    selected={form.date}
+                    startDate={form.startDate}
+                    endDate={form.endDate}
                     onChange={handleDateChange}
+                    selectsRange
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
-                    placeholderText="Vyberte datum"
+                    placeholderText="Vyberte jedno nebo více datumů"
                     className="date-picker"
                     required
                 />
-
                 <label>Čas:</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
-                    onChange={date => setForm(prev => ({ ...prev, start: date ? date.toTimeString().slice(0,5) : '' }))}
+                    onChange={date =>
+                        setForm(prev => ({ ...prev, start: date ? date.toTimeString().slice(0, 5) : '' }))
+                    }
                     locale="cs"
                     showTimeSelect
                     showTimeSelectOnly
-                    timeIntervals={1}
+                    timeIntervals={15}
                     timeCaption="Čas"
                     dateFormat="HH:mm"
                     placeholderText="Vyberte čas"
                     className="date-picker"
                     required
                 />
-
-
                 <label>Cena:</label>
                 <input type="number" name="price" value={form.price} onChange={handleChange} />
-
                 <label>Místo:</label>
                 <input
                     name="location"
@@ -188,13 +238,10 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                         ))}
                     </ul>
                 )}
-
-                <label>Facebook URL:</label>
+                <label>Odkaz na událost:</label>
                 <input type="url" name="facebookUrl" value={form.facebookUrl} onChange={handleChange} />
-
                 <label>Plakát:</label>
-                <input type="file" accept="image/*" onChange={handleFile} />
-
+                <input type="file" accept="image/*" onChange={handleFile} ref={fileInputRef} />
                 <button type="submit" disabled={loadingSubmit}>
                     {loadingSubmit ? 'Odesílám...' : 'Odeslat'}
                 </button>

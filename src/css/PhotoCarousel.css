@@ -12,16 +12,14 @@ body{
     color: var(--text, #e6edf3);
 }
 
-.hero-carousel{
+
+.hero-carousel {
     position: relative;
     height: var(--hero-height);
     border-radius: var(--hero-radius);
     overflow: hidden;
-
-    background: #0b111f; /* fallback while images load */
+    clip-path: polygon(100% 0%, 0% 0% , 0.00% 90.05%, 2.00% 89.95%, 4.00% 89.65%, 6.00% 89.16%, 8.00% 88.51%, 10.00% 87.74%, 12.00% 86.88%, 14.00% 85.97%, 16.00% 85.07%, 18.00% 84.21%, 20.00% 83.45%, 22.00% 82.82%, 24.00% 82.35%, 26.00% 82.07%, 28.00% 81.99%, 30.00% 82.12%, 32.00% 82.44%, 34.00% 82.95%, 36.00% 83.61%, 38.00% 84.40%, 40.00% 85.27%, 42.00% 86.17%, 44.00% 87.07%, 46.00% 87.92%, 48.00% 88.67%, 50.00% 89.28%, 52.00% 89.73%, 54.00% 89.99%, 56.00% 90.05%, 58.00% 89.90%, 60.00% 89.56%, 62.00% 89.03%, 64.00% 88.35%, 66.00% 87.55%, 68.00% 86.68%, 70.00% 85.77%, 72.00% 84.87%, 74.00% 84.03%, 76.00% 83.30%, 78.00% 82.70%, 80.00% 82.27%, 82.00% 82.04%, 84.00% 82.00%, 86.00% 82.17%, 88.00% 82.54%, 90.00% 83.08%, 92.00% 83.78%, 94.00% 84.58%, 96.00% 85.47%, 98.00% 86.38%, 100.00% 87.27%);
 }
-
-/* Slides */
 .hero-slide{
     position: absolute; inset: 0;
     width: 100%; height: 100%;
@@ -63,32 +61,10 @@ body{
     text-shadow: 0 1px 12px rgba(0,0,0,.45);
 }
 
-/* Dots */
-.hero-dots{
-    position:absolute; left:50%; bottom:18px;
-    transform: translateX(-50%);
-    display:flex; gap:8px;
-}
-.hero-dot{
-    width:10px; height:10px; border-radius:50%;
-    background: var(--hero-dot);
-    border: none; cursor: pointer;
-    transition: transform .15s ease, background .15s ease;
-}
-.hero-dot:hover{ transform: scale(1.15) }
-.hero-dot.active{ background: var(--hero-dot-active) }
-
-/* Wavy bottom edge */
-.hero-wave{
-    position:absolute; left:0; right:0; bottom:-1px;
-    line-height:0; height: 90px; pointer-events:none;
-}
-.hero-wave svg{
-    display:block; width:100%; height:100%;
-}
 
 /* Reduce motion for a11y */
 @media (prefers-reduced-motion: reduce){
     .hero-slide{ transition: none }
     .hero-dot{ transition: none }
 }
+

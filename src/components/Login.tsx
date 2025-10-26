@@ -29,7 +29,6 @@ export default function Login() {
             <label>Heslo:</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
             <button type="submit">{mode === 'login' ? 'Přihlásit' : 'Zaregistrovat'}</button>
             <p onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} style={{ cursor: 'pointer', textAlign: 'center' }}>
-                {mode === 'login' ? 'Nemáte účet? Zaregistrujte se' : 'Mám účet? Přihlásit se'}
             </p>
         </form>
     );

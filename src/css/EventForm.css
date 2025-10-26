@@ -1,135 +1,170 @@
-/* EventForm.css – styled to match CalendarView + PublicPage heraldic theme */
-:root {
-    --blue: #115DA8;
-    --blue-2: #0D4784;
-    --red: #D12B2B;
-    --gold: #F2C200;
-    --white: #ffffff;
-    --ink: #0E0E10;
-    --radius: 16px;
-    --shadow: 0 12px 30px rgba(0,0,0,.18);
+:root{
+    --bg-body: #0f141b;          /* barva pozadí stránky (už ji asi máš) */
+    --card:    #161c24;          /* panel formuláře */
+    --card-2:  #1b2230;          /* hover/states */
+    --text:    #e7edf7;
+    --muted:   #9aa4b2;
+    --line:    #2a3242;
+    --accent:  #d1b15a;          /* zlatý proužek jako u nadpisů */
+    --radius:  14px;
+
+    /* tvůj gradient */
+    --g1: rgba(2,0,36,1);
+    --g2: rgba(9,9,121,1);
+    --g3: rgba(32,12,207,1);
 }
 
+/* Kontejner – centrování a šířka */
+/* Container — properly centered on all screens */
 .event-form-container {
-    max-width: 500px;
-    margin: 2rem auto;
-    background-color: var(--white);
-    border-radius: var(--radius);
-    border: 2.5px solid #111; /* heraldic black outline */
-    box-shadow: var(--shadow);
-    padding: 1.5rem 2rem;
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    /* Make sure it’s not offset to the right */
+    width: 100%;
+    max-width: 100%; /* prevent overflow */
+    margin: 40px auto 80px;
+    padding: 0 1rem; /* equal padding left/right */
+
+    box-sizing: border-box;
 }
 
-.event-form-container h2 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: var(--blue-2);
-    font-size: 1.6rem;
-    font-weight: 900;
-    position: relative;
+/* Form card — centered within the container */
+.event-form-container form {
+    width: 100%;
+    max-width: 520px; /* fixed readable width */
+    background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.02),
+            rgba(255, 255, 255, 0)
+    ),
+    var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    padding: 22px 22px 26px;
+    color: var(--text);
+    margin: 0 auto; /* center the form block */
 }
-.event-form-container h2::after {
+
+/* Nadpis se zlatou linkou */
+.event-form-container h2{
+    margin: 6px 0 18px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: .2px;
+    text-align: center;
+}
+.event-form-container h2::after{
     content: "";
     display: block;
-    height: 4px;
-    width: 80px;
-    background: linear-gradient(90deg, var(--gold), var(--red));
+    width: 120px;
+    height: 3px;
+    background: var(--accent);
     border-radius: 999px;
-    margin: 0.5rem auto 0;
-    box-shadow: 0 4px 12px rgba(242,194,0,.35);
+    margin: 10px auto 0;
+
 }
 
-/* Labels */
-.event-form-container label {
+/* Popisky */
+.event-form-container label{
     display: block;
-    margin-bottom: 0.35rem;
-    color: var(--ink);
-    font-weight: 700;
+    margin: 14px 0 6px;
+    color: var(--muted);
+    font-size: .88rem;
 }
 
-/* Inputs & selects */
-.event-form-container input[type="text"],
-.event-form-container input[type="date"],
-.event-form-container input[type="time"],
-.event-form-container input[type="number"],
-.event-form-container input[type="url"],
+/* Vstupy */
+.event-form-container input,
 .event-form-container select,
-.event-form-container input[type="file"] {
+.event-form-container .date-picker{
     width: 100%;
-    padding: 0.65rem 0.8rem;
-    margin-bottom: 1rem;
-    border: 2px solid #111;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
-    background: #fff;
-    color: var(--ink);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    background: var(--card-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
 }
+
+.event-form-container input::placeholder,
+.event-form-container .date-picker::placeholder{ color: #8e96a4; }
 
 .event-form-container input:focus,
-.event-form-container select:focus {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 4px rgba(242,194,0,0.35);
+.event-form-container select:focus,
+.event-form-container .date-picker:focus{
+    border-color: rgba(32,12,207,.65);
+    box-shadow: 0 0 0 4px rgba(32,12,207,.18);
 }
 
-/* Suggestions dropdown */
-.event-form-container .suggestions {
-    position: absolute;
-    background: var(--white);
-    border: 2px solid #111;
-    border-radius: 12px;
-    width: calc(100% - 2rem);
-    max-height: 150px;
-    overflow-y: auto;
-    box-shadow: var(--shadow);
-    z-index: 10;
-    margin-top: -0.5rem;
-}
+/* DatePicker z knihovny – sjednocení vzhledu */
+.event-form-container .react-datepicker-wrapper{ width:100%; }
+.event-form-container .react-datepicker-popper{ z-index: 50; }
 
-.event-form-container .suggestions li {
-    padding: 0.5rem 0.75rem;
+/* Soubor (nebudu schovávat nativní, jen ho “zpaneluju”) */
+.event-form-container input[type="file"]{
+    padding: 10px 12px;
     cursor: pointer;
-    color: var(--ink);
-    font-weight: 600;
 }
 
-.event-form-container .suggestions li:hover {
-    background-color: rgba(242,194,0,0.12);
+/* Dropdown návrhů míst */
+.event-form-container .suggestions{
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 6px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    max-height: 220px;
+    overflow: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.event-form-container .suggestions li{
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+}
+.event-form-container .suggestions li:hover{
+    background: rgba(255,255,255,.04);
 }
 
-/* Submit button */
-.event-form-container button[type="submit"] {
+/* Tlačítko – gradient podle tvých barev */
+/* --- Styl pouze pro tlačítko Odeslat --- */
+.event-form-container form button[type="submit"] {
+    margin-top: 16px;
     width: 100%;
-    padding: 0.8rem 1rem;
-    background: linear-gradient(180deg, var(--red), #b61f1f);
-    color: var(--white);
-    font-size: 1.1rem;
-    font-weight: 800;
-    border: 2px solid #111;
-    border-radius: 12px;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-weight: 700;
+    color: #fff;
+    background-color: #fcc200;
     cursor: pointer;
-    box-shadow: 0 10px 22px rgba(209,43,43,.25);
-    transition: transform 0.1s ease, filter 0.12s ease;
+    transition: filter 0.15s ease, transform 0.08s ease;
 }
 
-.event-form-container button[type="submit"]:hover {
-    transform: translateY(-1px);
-    filter: saturate(1.04) brightness(1.02);
+/* Hover a kliknutí */
+.form button[type="submit"]:hover {
+    background-color: #FFD700;
 }
 
-.event-form-container button[disabled] {
-    background-color: #6c757d;
+.event-form-container form button[type="submit"]:active {
+    transform: translateY(1px);
+}
+
+/* Disabled stav */
+.event-form-container form button[type="submit"][disabled] {
+    opacity: 0.7;
     cursor: not-allowed;
-    box-shadow: none;
 }
 
-/* Responsive tweaks */
-@media (max-width: 576px) {
-    .event-form-container {
-        padding: 1rem;
-        margin: 1rem;
-    }
+
+/* Responsivní drobnosti – víc prostoru na větších displejích */
+@media (min-width: 900px){
+    .event-form-container{ width: min(560px, 92vw); }
+    .event-form-container form{ padding: 26px 26px 30px; }
 }

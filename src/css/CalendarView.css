@@ -1,205 +1,284 @@
-/* CalendarView.css – Dark, clean, city-events style */
+/*
+ * =============================================
+ * MODERN DESIGN FOR CALENDAR VIEW COMPONENT
+ * =============================================
+ */
+
+/* --- 1. Variables and Global Styles --- */
 :root {
-    --bg: #0B111F;         /* Hlavní pozadí */
-    --panel: #1E2E47;      /* Panely */
-    --panel-2: #18263A;    /* Tmavší odstín pro přechody */
-    --card: #1E2E47;       /* Karty */
-    --card-2: #18263A;     /* Druhá barva karet */
-    --muted: #AAB8C6;      /* Tlumená světle šedá/modrá pro text */
-    --text: #E6EDF3;       /* Hlavní text – světle šedobílá */
-    --accent: #3E5972;     /* Akcentní střední modrá */
-    --accent-2: #4E6C87;   /* Světlejší akcent */
-    --ring: 0 0 0 2px rgba(62, 89, 114, .35);
-    --shadow: 0 8px 24px rgba(0,0,0,.5);
+    /* --- New High-Contrast Palette --- */
+
+    /* Backgrounds: Dark charcoal/slate greys for clear separation */
+    --bg-primary: #020024;      /* Your original page background */
+    --bg-secondary: #1A202C;    /* Slate grey for cards & filter bar */
+    --bg-tertiary: #2D3748;     /* A lighter slate for inputs */
+
+    /* Text: Clean and bright for maximum readability */
+    --text-primary: #FFFFFF;   /* Pure white for titles and main text */
+    --text-secondary: #A0AEC0; /* Light grey for secondary details */
+
+    /* Accent: A vibrant gold/yellow for a powerful pop */
+    --accent-primary: #fcc200; /* Bright Gold */
+    --accent-hover: #FFD700;   /* A slightly more saturated gold for hover */
+
+    /* Borders & Shadows */
+    --border-color: #4A5568;   /* A visible but not distracting grey border */
+    --shadow-color: rgba(0, 0, 0, 0.5);
+
+    /* Unchanged Variables */
+    --radius-sm: 6px;
+    --radius-md: 12px;
 }
 
+.calendar-view {
+    color: var(--text-primary);
+    padding: 2rem 1rem;
+}
 
-
-
-
-
-
-*{box-sizing:border-box}
-html,body,#root{height:100%}
-body{background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue","Noto Sans",sans-serif}
-
-/* Wrapper */
-.calendar-view .cv-container{
-    max-width: 1120px;
+.cv-container {
+    max-width: 1200px;
     margin: 0 auto;
-    padding: clamp(16px, 2.5vw, 28px);
 }
 
-/* Filters pill */
-.calendar-view .filter-bar{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid rgba(148,163,184,.18);
-    border-radius:999px;
-    padding:10px 16px;
-    box-shadow:var(--shadow);
-    position:sticky;
-    top:12px;
-    z-index:5;
-    backdrop-filter:saturate(120%) blur(6px);
-    margin-bottom:28px;
+/* --- Filter Bar --- */
+.filter-bar {
+    display: flex;
+    align-items: center; /* Vertically aligns all filter items */
+    flex-wrap: wrap;     /* Allows items to wrap on small screens */
+    gap: 1rem;           /* Creates consistent space between items */
+
+    padding: 1.5rem;
+    background-color: var(--bg-secondary); /* #1A202C */
+    border-radius: var(--radius-md);     /* 12px */
+    margin-bottom: 2.5rem;
+    border: 1px solid var(--border-color); /* #4A5568 */
 }
 
-.calendar-view .filter-bar select,
-.calendar-view .filter-bar .date-filter{
-    appearance:none;
-    background:var(--card);
-    color:var(--text);
-    border:1px solid rgba(148,163,184,.22);
-    border-radius:10px;
-    padding:10px 12px;
-    min-width: 180px;
-    outline:none;
-    transition: border-color .15s ease, box-shadow .15s ease, transform .02s;
-}
-.calendar-view .filter-bar select:focus,
-.calendar-view .filter-bar .date-filter:focus{ box-shadow: var(--ring); border-color:transparent }
-.calendar-view .filter-bar select:hover,
-.calendar-view .filter-bar .date-filter:hover{ border-color: rgba(148,163,184,.38) }
+/* Common styles for all filter controls to ensure they look the same */
+.filter-bar select,
+.filter-bar .react-datepicker-wrapper input {
+    /* Layout */
+    flex: 1; /* Allows each item to grow and fill available space */
+    min-width: 200px; /* Prevents items from becoming too small */
 
-/* Month block */
-.calendar-view .month-section{ margin-bottom:34px }
-.calendar-view .month-title{
-    font-size: clamp(20px, 2.2vw, 26px);
-    font-weight:700;
-    letter-spacing:.2px;
-    margin: 8px 6px 16px;
-    color:#dbeafe;
-    text-shadow:0 1px 0 rgba(0,0,0,.4);
-    display:flex; align-items:center; gap:10px;
-}
-.calendar-view .month-title::before{
-    content:"";
-    width:8px; height:8px; border-radius:50%;
-    background:var(--accent);
-    box-shadow:0 0 0 6px rgba(96,165,250,.12);
+    /* Appearance */
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5; /* Ensures consistent height */
+    background-color: var(--bg-tertiary); /* #2D3748 */
+    color: var(--text-primary);           /* #FFFFFF */
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);      /* 6px */
+    transition: all 0.2s ease;
 }
 
-/* List (one card per row as v diagramu) */
-.calendar-view .grid{
-    display:flex; flex-direction:column;
-    gap:14px;
+/* Custom dropdown arrow for <select> elements */
+.filter-bar select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A0AEC0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.7rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em;
+    padding-right: 2.5rem; /* Space for the custom arrow */
 }
 
-/* Event card */
-.calendar-view .card{
-    display:grid;
-    grid-template-columns: 140px 1fr;
-    gap:20px;
-    align-items:center;
-    background:linear-gradient(180deg,var(--card),var(--card-2));
-    border:1px solid rgba(148,163,184,.16);
-    border-radius:18px;
-    padding:14px;
-    box-shadow: var(--shadow);
-    cursor:pointer;
-    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-}
-.calendar-view .card:hover{
-    transform: translateY(-2px);
-    border-color: rgba(125,211,252,.35);
-    box-shadow: 0 10px 28px rgba(2,8,23,.55);
-}
-.calendar-view .card:active{ transform: translateY(0) }
-
-/* Poster left */
-.calendar-view .poster{
-    width: 140px; height: 220px; object-fit: cover;
-    border-radius:20px;
-    border:1px solid rgba(148,163,184,.18);
-    background:#0b0f14;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+/* Focus state for better accessibility */
+.filter-bar select:focus,
+.filter-bar .react-datepicker-wrapper input:focus {
+    outline: none;
+    border-color: var(--accent-primary); /* #fcc200 */
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
-/* Right side */
-.calendar-view .info{ min-width:0 }
-.calendar-view .info-box{
-    background: rgba(2,6,23,.35);
-    border:1px solid rgba(148,163,184,.16);
-    border-radius:14px;
-    padding:12px 14px;
-}
-
-/* Title & rows */
-.calendar-view .title{
-    margin: 0 0 8px;
-    font-size: clamp(18px, 1.9vw, 22px);
-    line-height:1.25; font-weight:700;
-}
-.calendar-view .icon-row{
-    display:flex; align-items:center; gap:8px;
-    color: var(--muted);
-    padding:6px 0;
-    border-top:1px dashed rgba(148,163,184,.12);
-}
-.calendar-view .icon-row:first-of-type{ border-top:none }
-.calendar-view .icon-row svg{ flex:0 0 auto; opacity:.9 }
-
-/* Modal */
-.calendar-view .modal-bg{
-    position:fixed; inset:0; background:rgba(2,6,23,.75);
-    backdrop-filter: blur(4px); display:grid; place-items:center; z-index:50;
-}
-.calendar-view .modal{
-    width:min(780px, 92vw);
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid rgba(148,163,184,.22);
-    border-radius:18px; padding:18px;
-    box-shadow: var(--shadow);
-}
-.calendar-view .modal h2{ margin:0 0 10px }
-.calendar-view .modal p{ margin:8px 0; color:var(--muted) }
-.calendar-view .modal a{ color: var(--accent); text-decoration: none }
-.calendar-view .modal a:hover{ text-decoration: underline; color: var(--accent-2) }
-.calendar-view .modal-poster{
-    width:100%; height: fit-content; object-fit: cover;
-    border-radius:14px; margin-bottom:12px;
-    border:1px solid rgba(148,163,184,.18);
-}
-.calendar-view .close-button{
-    margin-top:12px; inline-size:100%;
-    padding:10px 12px; border-radius:12px;
-    background: linear-gradient(180deg, #0ea5e9, #3b82f6);
-    color:white; font-weight:700; letter-spacing:.2px; border:none; cursor:pointer;
-    transition: filter .1s ease;
-}
-.calendar-view .close-button:hover{ filter: brightness(1.05) }
-
-/* Datepicker wrapper (ke konzistentní výšce) */
-.calendar-view .date-filter-wrapper{ display:flex }
-.calendar-view .date-filter{
+/* Make the datepicker wrapper behave like other flex items */
+.filter-bar .react-datepicker-wrapper,
+.filter-bar .react-datepicker__input-container {
+    flex: 1;
+    display: flex; /* Ensures the input inside fills the wrapper */
     min-width: 200px;
 }
 
-/* Small screens */
-@media (max-width: 720px){
-    .calendar-view .card{
-        grid-template-columns: 100px 1fr;
-        padding:12px; gap:12px;
+/* --- 3. Month Groups & Event Grid --- */
+.month-group {
+    margin-bottom: 3rem;
+}
+
+.month-group h2 {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--accent-primary);
+    display: inline-block;
+}
+
+.events-grid {
+    display: grid;
+    gap: 1.5rem;
+    /* Responsive grid: 1 column on small screens, up to 3 on large */
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+/* --- 4. Event Card --- */
+.event-card {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 15px var(--shadow-color);
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px var(--shadow-color);
+    border-color: var(--accent-hover);
+}
+
+.event-card .poster {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    height: 400px;
+}
+
+.event-header {
+    padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.event-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.event-meta {
+    padding: 0 1.25rem 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: auto; /* Pushes meta to the bottom */
+}
+
+.event-meta p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.event-meta p svg {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+/* --- 5. Modal --- */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: scaleUp 0.3s ease;
+    padding: 2rem;
+    position: relative;
+}
+
+.modal-poster {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+    object-fit: cover;
+    height: auto;
+}
+
+.modal h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+.modal p {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    font-size: 1.1rem;
+}
+
+.modal p svg {
+    color: var(--accent-primary);
+}
+
+.modal a {
+    color: var(--accent-hover);
+    text-decoration: none;
+    font-weight: 500;
+}
+.modal a:hover {
+    text-decoration: underline;
+}
+
+.close-button {
+    background-color: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: block;
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.close-button:hover {
+    background-color: var(--accent-hover);
+}
+
+/* --- 6. Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* --- 7. Responsive Adjustments --- */
+@media (min-width: 768px) {
+    .filter-bar select,
+    .filter-bar .react-datepicker-wrapper {
+        width: auto; /* Auto width on larger screens */
+        flex: 1;
     }
-    .calendar-view .poster{ width:100px; height:100px; border-radius:14px }
-    .calendar-view .filter-bar{ flex-wrap:wrap; border-radius:18px }
-}
-
-/* Accessibility niceties */
-@media (prefers-reduced-motion: reduce){
-    .calendar-view .card,
-    .calendar-view .filter-bar select,
-    .calendar-view .filter-bar .date-filter { transition: none }
-}
-
-/* Optional nice scrollbars on desktop */
-@media (hover:hover){
-    *{ scrollbar-width: thin; scrollbar-color: #334155 #0b1220 }
-    *::-webkit-scrollbar{ height:10px; width:10px }
-    *::-webkit-scrollbar-thumb{ background:#334155; border-radius:8px }
-    *::-webkit-scrollbar-track{ background:#0b1220 }
 }

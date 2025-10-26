@@ -1,108 +1,85 @@
-/* PublicPage.css – koresponduje s CalendarView.css */
-:root{
-    --blue:#115DA8;
-    --blue-2:#0D4784;
-    --red:#D12B2B;
-    --gold:#F2C200;
-    --white:#ffffff;
-    --ink:#0E0E10;
-    --radius:16px;
-    --shadow:0 12px 30px rgba(0,0,0,.18);
+/* ==========================================================================
+   1. Foundation & Global Styles
+   ========================================================================== */
+
+
+
+/* Universal helpers */
+img, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
-body{
+
+/* 1. Reset and Foundation for Real Mobile Devices */
+html, body {
+    padding: 0;
     margin: 0;
+    height: 100%;
+    background-color: #0D1117; /* Ensures no white flashes */
 }
 
-/* Wrapper */
-.public-page{
-    min-height:100dvh;
-    background:
-            radial-gradient(1100px 500px at 80% -10%, rgba(242,194,0,.10), transparent 60%),
-            linear-gradient(180deg, var(--blue-2), var(--blue));
-    color:var(--white);
+/* 2. Main Page Container using the correct viewport unit */
+.public-page.bg {
+    /* LOCK the height to the dynamic screen size */
+    height: 100dvh;
+
+    /* Prevent the whole container from ever growing taller than the screen */
+    overflow-y: auto;
+
+    /* Keep the flexbox layout for its children */
+    display: block;
+
+
+    /* Your standard styles */
+    background-color: #0D1117;
+    color: var(--text, #e6eef6);
 }
 
-/* Header */
-.public-page .page-header{
-    max-width:1200px; margin:0 auto; padding:2rem 1rem 0.5rem;
-}
-.public-page .page-title{
-    margin:0;
-    font-size:2.2rem; font-weight:900; letter-spacing:.3px;
-    display:flex; align-items:center; gap:.8rem;
-    text-shadow:0 2px 10px rgba(0,0,0,.15);
-    position:relative;
-}
-.public-page .page-title::after{
-    content:"";
-    height:6px; width:160px; border-radius:999px;
-    background:linear-gradient(90deg, var(--gold), var(--red));
-    margin-left:.6rem;
-    box-shadow:0 6px 18px rgba(242,194,0,.35);
+/* 3. The flex-grow fix we discovered earlier */
+.page-content {
+    width: min(100% - 2rem, 1200px);
+    margin-inline: auto;
+    padding-block: 18px 0;
+    flex: 1;
 }
 
-/* Content container */
-.public-page .page-content{
-    max-width:1200px; margin:0 auto; padding:1rem 1rem 3rem;
+/* Spacing for sections within the page */
+.calendar-section {
+    margin-bottom: 24px;
 }
 
-/* Calendar section just inherits CalendarView styles */
-.public-page .calendar-section{}
+/* ==========================================================================
+   4. Form & Decorative Elements
+   ========================================================================== */
 
-/* Form block – bílé plátno s „heraldickým“ obrysem */
-.public-page .form-section{
-    margin-top:2rem;
-}
-.public-page .form-title{
-    font-size:1.4rem; font-weight:900; margin:0 0 .8rem .25rem;
-    display:flex; align-items:center; gap:.6rem;
-}
-.public-page .form-title::before{
-    content:""; width:14px; height:14px; border-radius:4px;
-    background:var(--red); border:2px solid #111;
-    box-shadow:0 3px 10px rgba(209,43,43,.25);
-}
-.public-page .form-shell{
-    background:var(--white); color:#1d2636;
-    border:2.5px solid #111; border-radius:18px;
-    box-shadow:var(--shadow);
-    padding:1rem;
+/* Heading with decorative lines */
+.separator-with-lines {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: var(--text-primary, #fff);
+    font-size: clamp(1.25rem, 3.2vw, 1.8rem);
+    font-weight: 600;
+    white-space: normal;
+    margin: 0 0 1.25rem 0;
 }
 
-/* Vnitřek EventForm – sjednocení prvků (pokud nejsou již stylované) */
-.public-page .form-shell input,
-.public-page .form-shell select,
-.public-page .form-shell textarea{
-    width:100%;
-    background:#fff;
-    color:#0f1830;
-    border:2px solid #111;
-    border-radius:12px;
-    padding:.65rem .8rem;
-    margin:.45rem 0;
-    font-weight:600;
-}
-.public-page .form-shell input:focus,
-.public-page .form-shell select:focus,
-.public-page .form-shell textarea:focus{
-    outline:none; box-shadow:0 0 0 4px rgba(242,194,0,.35);
-    border-color:var(--gold);
-}
-.public-page .form-shell button{
-    background:linear-gradient(180deg, var(--red), #b61f1f);
-    color:#fff; font-weight:800;
-    border:2px solid #111; border-radius:12px;
-    padding:.7rem 1rem; cursor:pointer;
-    box-shadow:0 10px 22px rgba(209,43,43,.25);
-    transition:transform .1s ease, filter .12s ease;
-}
-.public-page .form-shell button:hover{
-    transform:translateY(-1px);
-    filter:saturate(1.04) brightness(1.02);
+.separator-with-lines::before,
+.separator-with-lines::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 2px;
+    background: var(--accent-primary, #fcc200);
 }
 
-/* Utility spacing to align with calendar edges on small screens */
-@media (max-width:640px){
-    .public-page .page-header{ padding:1.5rem .9rem .25rem; }
-    .public-page .page-content{ padding:.5rem .9rem 2rem; }
+
+
+/* A centered wrapper specifically for the form */
+.form-shell {
+    max-width: 900px;
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+    margin: 32px auto 0; /* Updated: top, auto, NO bottom margin */
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import '../css/PhotoCarousel.css';
 
 type Props = {
     images: string[];
@@ -64,15 +65,7 @@ export default function photoCarousel({
                 {subtitle && <p className="hero-subtitle">{subtitle}</p>}
             </div>
 
-            {/* Wavy bottom */}
-            <div className="hero-wave" aria-hidden="true">
-                <svg viewBox="0 0 1440 140" preserveAspectRatio="none">
-                    <path
-                        d="M0,64 C160,128 320,0 480,16 C640,32 800,144 960,128 C1120,112 1280,32 1440,80 L1440,160 L0,160 Z"
-                        fill={waveFill}
-                    />
-                </svg>
-            </div>
+
         </div>
     );
 }

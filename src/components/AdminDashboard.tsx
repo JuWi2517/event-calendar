@@ -1,131 +1,483 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { addDoc, collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDocs,
+    updateDoc,
+} from 'firebase/firestore';
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject,
+} from 'firebase/storage';
 import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
+import ReactDatePicker from 'react-datepicker';
+import { registerLocale } from 'react-datepicker';
+import cs from 'date-fns/locale/cs';
+import 'react-datepicker/dist/react-datepicker.css';
 import '../css/AdminDashboard.css';
+import EventForm from './EventForm';
+
+registerLocale('cs', cs);
+
+type WithId<T> = T & { id: string };
+
+// --- 1. FACEBOOK URL NORMALIZER FUNCTION (FROM PREVIOUS STEP) ---
+const FB_RESOLVER_ENDPOINT = 'https://us-central1-culture-calendar-4747b.cloudfunctions.net/api/resolve-link';
+
+async function normalizeFacebookUrl(rawUrl: string): Promise<string> {
+    const trimmedUrl = (rawUrl || '').trim();
+    if (!trimmedUrl) return '';
+
+    const directMatch = trimmedUrl.match(/facebook\.com\/events\/(\d+)/);
+    if (directMatch) {
+        return `https://www.facebook.com/events/${directMatch[1]}/`;
+    }
+
+    if (trimmedUrl.includes('fb.me')) {
+        try {
+            const response = await fetch(`${FB_RESOLVER_ENDPOINT}?url=${encodeURIComponent(trimmedUrl)}`);
+            if (!response.ok) return trimmedUrl;
+            const data = await response.json();
+            if (data?.resolved) return String(data.resolved);
+            return trimmedUrl;
+        } catch {
+            return trimmedUrl;
+        }
+    }
+    return trimmedUrl;
+}
 
 export default function AdminDashboard() {
-    const [subs, setSubs] = useState<Event[]>([]);
-    const [modalEvent, setModalEvent] = useState<Event | null>(null);
-    const [editedEvent, setEditedEvent] = useState<Event | null>(null);
+    const [pending, setPending] = useState<WithId<Event>[]>([]);
+    const [approved, setApproved] = useState<WithId<Event>[]>([]);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editedEvent, setEditedEvent] = useState<WithId<Event> | null>(null);
+    const [editedCollection, setEditedCollection] = useState<'submissions' | 'events' | null>(null);
     const [newImage, setNewImage] = useState<File | null>(null);
-    const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
 
+    // --- NEW: STATE FOR FULLSCREEN IMAGE VIEWER ---
+    const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
+
+    const [locQuery, setLocQuery] = useState('');
+    const [locSuggestions, setLocSuggestions] = useState<string[]>([]);
+    const suggRef = useRef<HTMLUListElement>(null);
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 
     useEffect(() => {
-        async function fetchSubs() {
-            const snapshot = await getDocs(collection(db, 'submissions'));
-            const data = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as Event) }));
-            setSubs(data);
-        }
-        fetchSubs();
+        (async () => {
+            const subSnap = await getDocs(collection(db, 'submissions'));
+            const subs = subSnap.docs.map(d => ({ id: d.id, ...(d.data() as Event) }));
+            setPending(subs);
+
+            const evtSnap = await getDocs(collection(db, 'events'));
+            const evts = evtSnap.docs.map(d => ({ id: d.id, ...(d.data() as Event) }));
+            setApproved(evts);
+        })();
     }, []);
 
-    const fetchLocationSuggestions = async (query: string) => {
-        if (!query) {
-            setLocationSuggestions([]);
-            return;
-        }
-        try {
-            const response = await fetch(
-                `https://api.mapy.cz/v1/suggest/?query=${encodeURIComponent(query)}&lang=cs&type=poi&locality=Louny&apikey=${MAPY_API_KEY}`
-            );
-            const data = await response.json();
-            if (data.items && Array.isArray(data.items)) {
-                const suggestions = data.items.map((item: any) => item.name);
-                setLocationSuggestions(suggestions);
-            } else {
-                setLocationSuggestions([]);
+    useEffect(() => {
+        const ctl = new AbortController();
+        (async () => {
+            if (!locQuery || locQuery.length < 3) {
+                setLocSuggestions([]);
+                return;
             }
-        } catch (error) {
-            console.error('Error fetching location suggestions:', error);
-        }
+            try {
+                const resp = await fetch(
+                    `https://api.mapy.cz/v1/suggest/?query=${encodeURIComponent(
+                        locQuery
+                    )}&lang=cs&type=poi&locality=Louny&apikey=${MAPY_API_KEY}`,
+                    { signal: ctl.signal }
+                );
+                const data = await resp.json();
+                if (Array.isArray(data?.items)) {
+                    setLocSuggestions(data.items.map((it: any) => it.name));
+                } else {
+                    setLocSuggestions([]);
+                }
+            } catch {
+                setLocSuggestions([]);
+            }
+        })();
+        return () => ctl.abort();
+    }, [locQuery, MAPY_API_KEY]);
+
+    const openEdit = (item: WithId<Event>, from: 'submissions' | 'events') => {
+        setEditedEvent(item);
+        setEditedCollection(from);
+        setNewImage(null);
+        setModalOpen(true);
+        setLocQuery('');
+        setLocSuggestions([]);
+    };
+
+    const closeModal = () => {
+        setModalOpen(false);
+        setEditedEvent(null);
+        setEditedCollection(null);
+        setNewImage(null);
+        setLocQuery('');
+        setLocSuggestions([]);
     };
 
     const approve = async (id: string) => {
-        if (!window.confirm('Fakt to chceš schválit?')) return;
-        try {
-            const sub = subs.find(s => s.id === id);
-            if (!sub) return;
-            const { id: _, ...eventData } = sub;
-            await addDoc(collection(db, 'events'), { ...eventData, status: 'approved' });
-            await deleteDoc(doc(db, 'submissions', id));
-            setSubs(prev => prev.filter(s => s.id !== id));
-        } catch (error) {
-            console.error('Error approving event:', error);
-        }
+        const item = pending.find(x => x.id === id);
+        if (!item) return;
+        if (!confirm('Schválit a přesunout do „events“?')) return;
+
+        const { id: _drop, ...payload } = item;
+        await addDoc(collection(db, 'events'), { ...payload, status: 'approved' });
+        await deleteDoc(doc(db, 'submissions', id));
+
+        setPending(p => p.filter(x => x.id !== id));
+        setApproved(a => [{ ...item, status: 'approved' }, ...a]);
     };
 
-    const reject = async (id: string) => {
-        if (!window.confirm('Fakt to chceš smazat?')) return;
+    const unapprove = async (id: string) => {
+        const item = approved.find(x => x.id === id);
+        if (!item) return;
+        if (!confirm('Vrátit ze „events“ zpět do „submissions“?')) return;
+
+        const { id: _drop, ...payload } = item;
+        await addDoc(collection(db, 'submissions'), { ...payload, status: 'pending' });
+        await deleteDoc(doc(db, 'events', id));
+
+        setApproved(a => a.filter(x => x.id !== id));
+        setPending(p => [{ ...item, status: 'pending' }, ...p]);
+    };
+
+    const deletePosterIfAny = async (obj: Partial<Event>) => {
         try {
-            const sub = subs.find(s => s.id === id);
-            if (sub?.posterUrl) {
-                await deleteObject(ref(storage, sub.posterUrl)).catch(() => {});
+            const path = (obj as any)?.posterPath as string | undefined;
+            if (path) {
+                await deleteObject(ref(storage, path));
+                return;
             }
-            await deleteDoc(doc(db, 'submissions', id));
-            setSubs(prev => prev.filter(s => s.id !== id));
-        } catch (error) {
-            console.error('Error rejecting and deleting event:', error);
+            if (obj.posterUrl) {
+                const u = new URL(obj.posterUrl);
+                const encoded = u.pathname.split('/o/')[1];
+                if (encoded) {
+                    const fullPath = decodeURIComponent(encoded);
+                    await deleteObject(ref(storage, fullPath));
+                }
+            }
+        } catch {}
+    };
+
+    const removeCard = async (id: string, from: 'submissions' | 'events') => {
+        const list = from === 'submissions' ? pending : approved;
+        const itm = list.find(x => x.id === id);
+        if (!itm) return;
+
+        if (!confirm('Opravdu smazat?')) return;
+
+        try {
+            await deleteDoc(doc(db, from, id));
+
+            try { await deletePosterIfAny(itm); } catch (e) {
+                console.warn('Plakát se nepodařilo smazat:', e);
+            }
+
+            if (from === 'submissions') {
+                setPending(p => p.filter(x => x.id !== id));
+            } else {
+                setApproved(a => a.filter(x => x.id !== id));
+            }
+        } catch (e: any) {
+            console.error('Mazání dokumentu selhalo:', e);
+            alert('Mazání selhalo: ' + (e?.message ?? e));
         }
-    };
-
-    const handleLocationChange = (value: string) => {
-        setEditedEvent(prev => prev ? { ...prev, location: value } : null);
-        fetchLocationSuggestions(value);
-    };
-
-    const handleLocationSelect = (suggestion: string) => {
-        setEditedEvent(prev => prev ? { ...prev, location: suggestion } : null);
-        setLocationSuggestions([]);
     };
 
     const saveChanges = async () => {
-        if (!editedEvent || !editedEvent.id) return;
+        if (!editedEvent || !editedCollection) return;
+        const copy: WithId<Event> = { ...editedEvent };
+
+        // --- NEW: NORMALIZE FACEBOOK URL BEFORE SAVING ---
+        copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
+
         if (newImage) {
-            if (editedEvent.posterUrl) {
-                await deleteObject(ref(storage, editedEvent.posterUrl));
-            }
-            const imageRef = ref(storage, `images/${newImage.name}`);
-            await uploadBytes(imageRef, newImage);
-            const newImageUrl = await getDownloadURL(imageRef);
-            editedEvent.posterUrl = newImageUrl;
+            await deletePosterIfAny(copy);
+            const newPath = `posters/${Date.now()}_${newImage.name}`;
+            const newRef = ref(storage, newPath);
+            await uploadBytes(newRef, newImage);
+            copy.posterUrl = await getDownloadURL(newRef);
+            (copy as any).posterPath = newPath;
         }
-        await updateDoc(doc(db, 'submissions', editedEvent.id), editedEvent);
-        setSubs(prev => prev.map(s => (s.id === editedEvent.id ? editedEvent : s)));
-        setModalEvent(null);
-        setEditedEvent(null);
-        setNewImage(null);
+
+        const { id, ...payload } = copy;
+        await updateDoc(doc(db, editedCollection, id), payload);
+
+        if (editedCollection === 'submissions') {
+            setPending(p => p.map(x => (x.id === id ? copy : x)));
+        } else {
+            setApproved(a => a.map(x => (x.id === id ? copy : x)));
+        }
+
+        closeModal();
+    };
+
+    const setField = <K extends keyof Event>(key: K, val: Event[K]) => {
+        setEditedEvent(prev => (prev ? ({ ...prev, [key]: val } as WithId<Event>) : prev));
     };
 
     return (
-        <div className="admin-dashboard" style={{ padding: '1rem' }}>
-            <h2>Správa podání (Admin)</h2>
-            <div className="admin-dashboard-grid">
-                {subs.map(s => (
-                    <div key={s.id} className="admin-dashboard-card" onClick={() => { setModalEvent(s); setEditedEvent({ ...s }); }}>
-                        <h3>{s.title}</h3>
-                        <p>Datum: {s.date}</p>
-                        <p>Místo: {s.location}</p>
-                        <button onClick={e => { e.stopPropagation(); approve(s.id!); }}>Schválit</button>
-                        <button onClick={e => { e.stopPropagation(); reject(s.id!); }}>Zamítnout</button>
-                    </div>
-                ))}
-            </div>
+        <div className="admin-page">
+            <h2 className="admin-title">Správa událostí</h2>
 
-            {modalEvent && editedEvent && (
-                <div className="admin-dashboard-modal-bg" onClick={() => setModalEvent(null)}>
-                    <div className="admin-dashboard-modal" onClick={e => e.stopPropagation()}>
-                        <h2>Upravit událost</h2>
-                        {editedEvent.posterUrl && <img src={editedEvent.posterUrl} alt="Poster" className="admin-dashboard-modal-poster" />}
-                        {/* Form fields for editing... */}
-                        <button onClick={saveChanges}>Uložit změny</button>
-                        <button onClick={() => setModalEvent(null)}>Zavřít</button>
+            {/* Sections for pending and approved events... (code remains the same) */}
+            <section className="admin-section">
+                <div className="admin-section-head">
+                    <h3>Neschválené návrhy</h3>
+                    <span className="pill">{pending.length}</span>
+                </div>
+                <div className="cards-grid">
+                    {pending.map(s => (
+                        <article
+                            key={s.id}
+                            className="card"
+                            onClick={() => openEdit(s, 'submissions')}
+                            title="Upravit"
+                        >
+                            {s.posterUrl && <img src={s.posterUrl} alt="" className="card-poster" />}
+                            <div className="card-body">
+                                <h4 className="card-title">{s.title || 'Bez názvu'}</h4>
+                                <div className="meta">
+                                    <span>{s.date}</span>
+                                    {s.start && <span>{s.start}</span>}
+                                    {s.location && <span>{s.location}</span>}
+                                </div>
+                                <div className="actions">
+                                    <button
+                                        className="btn approve"
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            approve(s.id);
+                                        }}
+                                    >
+                                        Schválit
+                                    </button>
+                                    <button
+                                        className="btn delete"
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            removeCard(s.id, 'submissions');
+                                        }}
+                                    >
+                                        Smazat
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
+            <section className="admin-section">
+                <div className="admin-section-head">
+                    <h3>Schválené události</h3>
+                    <span className="pill">{approved.length}</span>
+                </div>
+                <div className="cards-grid">
+                    {approved.map(ev => (
+                        <article
+                            key={ev.id}
+                            className="card"
+                            onClick={() => openEdit(ev, 'events')}
+                            title="Upravit"
+                        >
+                            {ev.posterUrl && <img src={ev.posterUrl} alt="" className="card-poster" />}
+                            <div className="card-body">
+                                <h4 className="card-title">{ev.title || 'Bez názvu'}</h4>
+                                <div className="meta">
+                                    <span>{ev.date}</span>
+                                    {ev.start && <span>{ev.start}</span>}
+                                    {ev.location && <span>{ev.location}</span>}
+                                </div>
+                                <div className="actions">
+                                    <button
+                                        className="btn neutral"
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            unapprove(ev.id);
+                                        }}
+                                    >
+                                        Vrátit mezi neschválené
+                                    </button>
+                                    <button
+                                        className="btn delete"
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            removeCard(ev.id, 'events');
+                                        }}
+                                    >
+                                        Smazat
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
+
+            {/* MODAL */}
+            {modalOpen && editedEvent && (
+                <div className="modal-bg" onClick={closeModal}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-head">
+                            <h3>Upravit událost</h3>
+                            <button className="icon-close" onClick={closeModal}>
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="modal-grid">
+                            {/* All previous fields... */}
+                            <div className="field">
+                                <label>Název</label>
+                                <input
+                                    value={editedEvent.title || ''}
+                                    onChange={e => setField('title', e.target.value)}
+                                />
+                            </div>
+                            <div className="field">
+                                <label>Datum</label>
+                                <ReactDatePicker
+                                    selected={
+                                        editedEvent.date ? new Date(editedEvent.date) : null
+                                    }
+                                    onChange={(d: Date | null) =>
+                                        setField('date', d ? d.toISOString().split('T')[0] : '')
+                                    }
+                                    dateFormat="dd.MM.yyyy"
+                                    locale="cs"
+                                    placeholderText="Vyberte datum"
+                                    className="date-picker"
+                                />
+                            </div>
+                            <div className="field">
+                                <label>Čas</label>
+                                <ReactDatePicker
+                                    selected={
+                                        editedEvent.start
+                                            ? new Date(`1970-01-01T${editedEvent.start}`)
+                                            : null
+                                    }
+                                    onChange={d =>
+                                        setField(
+                                            'start',
+                                            d ? d.toTimeString().slice(0, 5) : ''
+                                        )
+                                    }
+                                    showTimeSelect
+                                    showTimeSelectOnly
+                                    timeIntervals={5}
+                                    timeCaption="Čas"
+                                    dateFormat="HH:mm"
+                                    locale="cs"
+                                    placeholderText="Vyberte čas"
+                                    className="date-picker"
+                                />
+                            </div>
+                            <div className="field">
+                                <label>Kategorie</label>
+                                <input
+                                    value={editedEvent.category || ''}
+                                    onChange={e => setField('category', e.target.value)}
+                                />
+                            </div>
+                            <div className="field">
+                                <label>Cena</label>
+                                <input
+                                    value={editedEvent.price || ''}
+                                    onChange={e => setField('price', e.target.value)}
+                                />
+                            </div>
+                            <div className="field">
+                                <label>Místo</label>
+                                <input
+                                    value={editedEvent.location || ''}
+                                    onChange={e => {
+                                        setField('location', e.target.value);
+                                        setLocQuery(e.target.value);
+                                    }}
+                                    autoComplete="off"
+                                />
+                                {locSuggestions.length > 0 && (
+                                    <ul className="suggestions" ref={suggRef}>
+                                        {locSuggestions.map((s, i) => (
+                                            <li
+                                                key={i}
+                                                onClick={() => {
+                                                    setField('location', s);
+                                                    setLocQuery('');
+                                                    setLocSuggestions([]);
+                                                }}
+                                            >
+                                                {s}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            {/* --- NEW: FACEBOOK URL FIELD --- */}
+                            <div className="field">
+                                <label>Facebook URL</label>
+                                <input
+                                    type="url"
+                                    placeholder="https://fb.me/..."
+                                    value={editedEvent.facebookUrl || ''}
+                                    onChange={e => setField('facebookUrl', e.target.value)}
+                                />
+                            </div>
+
+                            <div className="field">
+                                <label>Plakát</label>
+                                {editedEvent.posterUrl && (
+                                    <img
+                                        src={editedEvent.posterUrl}
+                                        className="poster-preview"
+                                        alt="Poster"
+                                        // --- NEW: ONCLICK TO OPEN FULLSCREEN ---
+                                        onClick={() => setFullScreenImageUrl(editedEvent.posterUrl)}
+                                        title="Zobrazit celý plakát"
+                                    />
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => setNewImage(e.target.files?.[0] ?? null)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="modal-actions">
+                            <button className="btn save" onClick={saveChanges}>
+                                Uložit změny
+                            </button>
+                            <button className="btn ghost" onClick={closeModal}>
+                                Zavřít
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
+
+            {/* --- NEW: FULLSCREEN IMAGE VIEWER --- */}
+            {fullScreenImageUrl && (
+                <div className="fullscreen-viewer" onClick={() => setFullScreenImageUrl(null)}>
+                    <img src={fullScreenImageUrl} alt="Fullscreen Poster" />
+                </div>
+            )}
+
+            <div className="form-shell">
+                <EventForm onSuccess={() => alert('Úspěšně přídáno')} />
+            </div>
         </div>
     );
 }

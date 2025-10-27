@@ -125,6 +125,7 @@ export default function CalendarView() {
                         placeholderText="Filtrovat podle dne"
                         dateFormat="d. MMMM yyyy"
                         isClearable
+                        readOnly
                     />
                 </div>
 

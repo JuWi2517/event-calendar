@@ -1,6 +1,6 @@
 // You need this import for 'React.ReactElement'
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PublicPage from './pages/PublicPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
@@ -16,16 +16,17 @@ export default function App() {
     return (
         <>
 
-            <BrowserRouter basename="/event-calendar">
+            <HashRouter>
                 <Routes>
-                    <Route path="/" element={<PublicPage />} />
-                    <Route path="/admin/login" element={<LoginPage />} />
+                    <Route index element={<PublicPage />} />
+                    <Route path="admin/login" element={<LoginPage />} />
                     <Route
-                        path="/admin/*"
+                        path="admin/*"
                         element={<PrivateRoute><AdminPage /></PrivateRoute>}
                     />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
-            </BrowserRouter>
+            </HashRouter>
         </>
     );
 }

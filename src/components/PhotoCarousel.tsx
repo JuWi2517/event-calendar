@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+// 1. Re-add 'useMemo' to the import list
+import { useEffect, useMemo, useRef, useState } from 'react';
 import '../css/PhotoCarousel.css';
 
 type Props = {
@@ -10,14 +11,13 @@ type Props = {
     height?: string;       // e.g. "68vh" or "760px"
 };
 
-export default function photoCarousel({
-                                         images,
-                                         title,
-                                         subtitle,
-                                         intervalMs = 6000,
-                                         waveColor,
-                                         height,
-                                     }: Props) {
+export default function PhotoCarousel({
+                                          images,
+                                          title,
+                                          subtitle,
+                                          intervalMs = 6000,
+                                          height,
+                                      }: Props) {
     const [idx, setIdx] = useState(0);
     const timerRef = useRef<number | null>(null);
     const safeImages = useMemo(() => images.filter(Boolean), [images]);
@@ -32,15 +32,6 @@ export default function photoCarousel({
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [intervalMs, safeImages.length]);
 
-    const waveFill = React.useMemo(() => {
-        if (waveColor) return waveColor;
-        if (typeof window !== 'undefined') {
-            const bg = getComputedStyle(document.body).backgroundColor;
-            return bg && bg !== 'rgba(0,0,0,0)' ? bg : '#0b111f';
-        }
-        return '#0b111f';
-    }, [waveColor]);
-
     if (!safeImages.length) return null;
 
     return (
@@ -48,7 +39,8 @@ export default function photoCarousel({
             className="hero-carousel"
             style={height ? ({ ['--hero-height' as any]: height } as React.CSSProperties) : undefined}
         >
-            {safeImages.map((src, i) => (
+            {/* 2. Add types (string, number) to map parameters */}
+            {safeImages.map((src: string, i: number) => (
                 <img
                     key={src + i}
                     src={src}

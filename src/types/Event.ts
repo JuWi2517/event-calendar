@@ -2,8 +2,9 @@ export interface Event {
     id?: string;
     title: string;
     category: string;
-    date: string;    // YYYY-MM-DD
-    start: string;   // HH:mm
+    startDate: string; // YYYY-MM-DD (Should NOT be 'date')
+    endDate?: string;  // YYYY-MM-DD (The '?' makes it optional)
+    start: string;     // HH:mm
     location: string;
     lat: number;
     lng: number;

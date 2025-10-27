@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
-import cs from 'date-fns/locale/cs';
+import { cs } from 'date-fns/locale/cs'; // <-- FIXED: Was default import, now named { cs }
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/EventForm.css';
 
@@ -124,10 +124,12 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     };
 
     const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            setForm(prev => ({ ...prev, poster: e.target.files[0] }));
+        const file = e.target.files?.[0];
+        if (file) {
+            setForm(prev => ({ ...prev, poster: file }));
         }
     };
+
 
     const handleSelect = (s: Suggestion) => {
         setForm(prev => ({ ...prev, location: s.name, lat: s.lat, lng: s.lng }));
@@ -156,6 +158,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
             const { poster, startDate, endDate, ...rest } = form;
 
+            // This object literal now correctly matches your Event.ts type
             const newEvent: Omit<Event, 'id'> & { posterPath: string } = {
                 ...rest,
                 facebookUrl: normalizedFbUrl,

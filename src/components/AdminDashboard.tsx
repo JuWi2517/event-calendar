@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     addDoc,
     collection,
@@ -17,7 +17,7 @@ import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
 import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
-import cs from 'date-fns/locale/cs';
+import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
@@ -248,7 +248,8 @@ export default function AdminDashboard() {
                             <div className="card-body">
                                 <h4 className="card-title">{s.title || 'Bez názvu'}</h4>
                                 <div className="meta">
-                                    <span>{s.date}</span>
+                                    {/* --- FIXED: .date -> .startDate --- */}
+                                    <span>{s.startDate}</span>
                                     {s.start && <span>{s.start}</span>}
                                     {s.location && <span>{s.location}</span>}
                                 </div>
@@ -294,7 +295,8 @@ export default function AdminDashboard() {
                             <div className="card-body">
                                 <h4 className="card-title">{ev.title || 'Bez názvu'}</h4>
                                 <div className="meta">
-                                    <span>{ev.date}</span>
+                                    {/* --- FIXED: .date -> .startDate --- */}
+                                    <span>{ev.startDate}</span>
                                     {ev.start && <span>{ev.start}</span>}
                                     {ev.location && <span>{ev.location}</span>}
                                 </div>
@@ -348,10 +350,12 @@ export default function AdminDashboard() {
                                 <label>Datum</label>
                                 <ReactDatePicker
                                     selected={
-                                        editedEvent.date ? new Date(editedEvent.date) : null
+                                        // --- FIXED: .date -> .startDate ---
+                                        editedEvent.startDate ? new Date(editedEvent.startDate) : null
                                     }
                                     onChange={(d: Date | null) =>
-                                        setField('date', d ? d.toISOString().split('T')[0] : '')
+                                        // --- FIXED: 'date' -> 'startDate' ---
+                                        setField('startDate', d ? d.toISOString().split('T')[0] : '')
                                     }
                                     dateFormat="dd.MM.yyyy"
                                     locale="cs"
@@ -443,8 +447,8 @@ export default function AdminDashboard() {
                                         src={editedEvent.posterUrl}
                                         className="poster-preview"
                                         alt="Poster"
-                                        // --- NEW: ONCLICK TO OPEN FULLSCREEN ---
-                                        onClick={() => setFullScreenImageUrl(editedEvent.posterUrl)}
+                                        // --- FIXED: posterUrl || null ---
+                                        onClick={() => setFullScreenImageUrl(editedEvent.posterUrl || null)}
                                         title="Zobrazit celý plakát"
                                     />
                                 )}

@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Event } from '../types/Event';
 import { Clock, MapPin, Tag, Calendar, CoinsIcon } from 'lucide-react';
 import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
-import cs from 'date-fns/locale/cs';
+import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/CalendarView.css';
 
@@ -17,7 +17,8 @@ const monthNames = [
 ];
 
 // Helper to format date ranges
-const formatDateRange = (startStr: string, endStr: string): string => {
+// --- FIXED: 'endStr' now accepts string | undefined ---
+const formatDateRange = (startStr: string, endStr: string | undefined): string => {
     if (!startStr) return 'Datum nespecifikováno';
     const start = new Date(startStr).toLocaleDateString('cs-CZ');
     if (!endStr || startStr === endStr) return start;
@@ -55,8 +56,9 @@ export default function CalendarView() {
             const futureEvents: Event[] = [];
             for (const docSnap of snap.docs) {
                 const data = docSnap.data() as Event;
+                // Use endDate if available, otherwise fall back to startDate
                 const eventEndDate = new Date(data.endDate || data.startDate);
-                if (eventEndDate < today) continue;
+                if (eventEndDate < today) continue; // Skip events that have already ended
                 futureEvents.push({ id: docSnap.id, ...data });
             }
 
@@ -71,6 +73,7 @@ export default function CalendarView() {
                 grouped[key].push(ev);
             });
 
+            // Sort events within each month by start date
             Object.values(grouped).forEach(arr =>
                 arr.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
             );
@@ -93,6 +96,7 @@ export default function CalendarView() {
             eventStart.setHours(0, 0, 0, 0);
             eventEnd.setHours(0, 0, 0, 0);
             filterDate.setHours(0, 0, 0, 0);
+            // Check if the filter date falls within the event's date range
             return filterDate >= eventStart && filterDate <= eventEnd;
         });
 
@@ -138,6 +142,7 @@ export default function CalendarView() {
                                             <h3>{ev.title}</h3>
                                         </div>
                                         <div className="event-meta">
+                                            {/* This call is now valid */}
                                             <p><Calendar size={16} /> {formatDateRange(ev.startDate, ev.endDate)}</p>
                                             <p><Clock size={16} /> {ev.start}</p>
                                             <p><MapPin size={16} /> {ev.location}</p>
@@ -156,15 +161,16 @@ export default function CalendarView() {
                         <div className="modal" onClick={e => e.stopPropagation()}>
                             {modalEvent.posterUrl && <img src={modalEvent.posterUrl} alt="" className="modal-poster" />}
                             <h2>{modalEvent.title}</h2>
+                            {/* This call is now valid */}
                             <p><Calendar size={16} /> Datum: {formatDateRange(modalEvent.startDate, modalEvent.endDate)}</p>
                             <p><Clock size={16} /> Začátek: {modalEvent.start}</p>
 
-                            {/* --- CHANGED: Location is now a clickable Google Maps link --- */}
+                            {/* --- FIXED: Google Maps link is now correct --- */}
                             {modalEvent.lat && modalEvent.lng ? (
                                 <p>
                                     <MapPin size={16} /> Místo:{" "}
                                     <a
-                                        href={`https://www.google.com/maps?q=${modalEvent.lat},${modalEvent.lng}`}
+                                        href={`https://www.google.com/maps/search/?api=1&query=${modalEvent.lat},${modalEvent.lng}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         title="Zobrazit na mapě"

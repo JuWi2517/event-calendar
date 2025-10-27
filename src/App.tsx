@@ -6,16 +6,14 @@ import AdminPage from './pages/AdminPage';
 import { auth } from './firebase';
 import './css/App.css';
 
-function PrivateRoute({ children }: { children: JSX.Element }) {
+// CHANGE 'JSX.Element' to 'React.ReactElement'
+function PrivateRoute({ children }: { children: React.ReactElement }) {
     return auth.currentUser ? children : <Navigate to="/admin/login" />;
 }
 
 export default function App() {
     return (
         <>
-
-
-
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<PublicPage />} />

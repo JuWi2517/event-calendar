@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import CalendarView from '../components/CalendarView';
 import EventForm from '../components/EventForm';
 import HeroCarousel from '../components/PhotoCarousel';
@@ -14,7 +14,7 @@ import img4 from '../Photos/DSC_9694-Enhanced-NR.jpg';
 const carouselImages = [img1, img2, img3, img4];
 
 
-export default function PublicPage(): JSX.Element {
+export default function PublicPage(): React.ReactElement {
     return (
 
         <div className="public-page bg">

@@ -385,7 +385,6 @@ export default function AdminDashboard() {
                                     selectsRange // Enable range selection
                                     dateFormat="dd.MM.yyyy"
                                     locale="cs"
-                                    placeholderText="Vyberte jedno nebo více datumů"
                                     className="date-picker"
                                 />
                             </div>

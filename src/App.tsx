@@ -9,7 +9,7 @@ import "./css/App.css";
 function PrivateRoute({ children }: { children: React.ReactElement }) {
     return auth.currentUser ? children : <Navigate to="/admin/login" replace />;
 }
-// cache bust
+// cache bust 2
 export default function App() {
     return (
         <HashRouter>

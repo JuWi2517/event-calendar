@@ -1,12 +1,21 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <title>Event Calendar</title>
+
+    <!-- Přepiš první načtení na hash route -->
+    <script>
+        // pokud není hash (např. /event-calendar/), přesměruj na #/
+        if (!location.hash) {
+            location.replace(location.pathname + location.search + '#/');
+        }
+    </script>
+</head>
+<body>
+<div id="root"></div>
+<!-- Vite si to při buildu přepíše správně podle base -->
+<script type="module" src="/src/main.tsx"></script>
+</body>
 </html>

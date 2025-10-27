@@ -24,6 +24,16 @@ import EventForm from './EventForm';
 
 registerLocale('cs', cs);
 
+// --- NEW HELPER FUNCTION (copied from EventForm) ---
+// Converts a Date object to a 'YYYY-MM-DD' string, ignoring timezones
+const toLocalDateString = (date: Date | null): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 type WithId<T> = T & { id: string };
 
 // --- 1. FACEBOOK URL NORMALIZER FUNCTION (FROM PREVIOUS STEP) ---
@@ -198,7 +208,7 @@ export default function AdminDashboard() {
         if (!editedEvent || !editedCollection) return;
         const copy: WithId<Event> = { ...editedEvent };
 
-        // --- NEW: NORMALIZE FACEBOOK URL BEFORE SAVING ---
+        // --- NORMALIZE FACEBOOK URL BEFORE SAVING ---
         copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
 
         if (newImage) {
@@ -224,6 +234,16 @@ export default function AdminDashboard() {
 
     const setField = <K extends keyof Event>(key: K, val: Event[K]) => {
         setEditedEvent(prev => (prev ? ({ ...prev, [key]: val } as WithId<Event>) : prev));
+    };
+
+    // --- NEW: Handler for the modal's date range picker ---
+    const handleModalDateChange = (dates: [Date | null, Date | null]) => {
+        const [start, end] = dates;
+        setEditedEvent(prev => (prev ? ({
+            ...prev,
+            startDate: toLocalDateString(start), // Convert Date to YYYY-MM-DD
+            endDate: toLocalDateString(end),   // Convert Date to YYYY-MM-DD
+        } as WithId<Event>) : prev));
     };
 
     return (
@@ -295,7 +315,6 @@ export default function AdminDashboard() {
                             <div className="card-body">
                                 <h4 className="card-title">{ev.title || 'Bez názvu'}</h4>
                                 <div className="meta">
-                                    {/* --- FIXED: .date -> .startDate --- */}
                                     <span>{ev.startDate}</span>
                                     {ev.start && <span>{ev.start}</span>}
                                     {ev.location && <span>{ev.location}</span>}
@@ -346,23 +365,31 @@ export default function AdminDashboard() {
                                     onChange={e => setField('title', e.target.value)}
                                 />
                             </div>
+
+                            {/* --- CHANGED: Date picker now supports range --- */}
                             <div className="field">
-                                <label>Datum</label>
+                                <label>Datum (nebo rozmezí)</label>
                                 <ReactDatePicker
+                                    // Use 'selected' for the first date, 'startDate' for the actual start
                                     selected={
-                                        // --- FIXED: .date -> .startDate ---
                                         editedEvent.startDate ? new Date(editedEvent.startDate) : null
                                     }
-                                    onChange={(d: Date | null) =>
-                                        // --- FIXED: 'date' -> 'startDate' ---
-                                        setField('startDate', d ? d.toISOString().split('T')[0] : '')
+                                    startDate={
+                                        editedEvent.startDate ? new Date(editedEvent.startDate) : null
                                     }
+                                    endDate={
+                                        // Handle empty string or null endDate
+                                        editedEvent.endDate ? new Date(editedEvent.endDate) : null
+                                    }
+                                    onChange={handleModalDateChange} // Use the new handler
+                                    selectsRange // Enable range selection
                                     dateFormat="dd.MM.yyyy"
                                     locale="cs"
-                                    placeholderText="Vyberte datum"
+                                    placeholderText="Vyberte jedno nebo více datumů"
                                     className="date-picker"
                                 />
                             </div>
+
                             <div className="field">
                                 <label>Čas</label>
                                 <ReactDatePicker
@@ -387,13 +414,21 @@ export default function AdminDashboard() {
                                     className="date-picker"
                                 />
                             </div>
+
+                            {/* --- CHANGED: Category is now a dropdown --- */}
                             <div className="field">
                                 <label>Kategorie</label>
-                                <input
+                                <select
                                     value={editedEvent.category || ''}
                                     onChange={e => setField('category', e.target.value)}
-                                />
+                                >
+                                    <option value="">Vyberte</option>
+                                    <option value="kultura">Kultura</option>
+                                    <option value="sport">Sport</option>
+                                    <option value="vzdělávání">Vzdělávání</option>
+                                </select>
                             </div>
+
                             <div className="field">
                                 <label>Cena</label>
                                 <input
@@ -429,12 +464,11 @@ export default function AdminDashboard() {
                                 )}
                             </div>
 
-                            {/* --- NEW: FACEBOOK URL FIELD --- */}
+                            {/* --- FACEBOOK URL FIELD --- */}
                             <div className="field">
                                 <label>Facebook URL</label>
                                 <input
                                     type="url"
-                                    placeholder="https://fb.me/..."
                                     value={editedEvent.facebookUrl || ''}
                                     onChange={e => setField('facebookUrl', e.target.value)}
                                 />

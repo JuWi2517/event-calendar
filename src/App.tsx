@@ -1,3 +1,4 @@
+// You need this import for 'React.ReactElement'
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import PublicPage from './pages/PublicPage';
@@ -6,7 +7,7 @@ import AdminPage from './pages/AdminPage';
 import { auth } from './firebase';
 import './css/App.css';
 
-// CHANGE 'JSX.Element' to 'React.ReactElement'
+
 function PrivateRoute({ children }: { children: React.ReactElement }) {
     return auth.currentUser ? children : <Navigate to="/admin/login" />;
 }
@@ -14,7 +15,8 @@ function PrivateRoute({ children }: { children: React.ReactElement }) {
 export default function App() {
     return (
         <>
-            <BrowserRouter>
+
+            <BrowserRouter basename="/event-calendar">
                 <Routes>
                     <Route path="/" element={<PublicPage />} />
                     <Route path="/admin/login" element={<LoginPage />} />

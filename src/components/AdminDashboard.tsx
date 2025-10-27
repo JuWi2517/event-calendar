@@ -387,6 +387,7 @@ export default function AdminDashboard() {
                                     locale="cs"
                                     className="date-picker"
                                     readOnly
+                                    showIcon
                                 />
                             </div>
 
@@ -413,6 +414,7 @@ export default function AdminDashboard() {
                                     placeholderText="Vyberte čas"
                                     className="date-picker"
                                     readOnly
+                                    showIcon
                                 />
                             </div>
 

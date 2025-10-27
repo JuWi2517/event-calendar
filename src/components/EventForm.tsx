@@ -206,6 +206,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     className="date-picker"
                     required
                     readOnly
+                    showIcon
                 />
                 <label>Čas:</label>
                 <ReactDatePicker

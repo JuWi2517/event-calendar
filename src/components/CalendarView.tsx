@@ -126,6 +126,7 @@ export default function CalendarView() {
                         dateFormat="d. MMMM yyyy"
                         isClearable
                         readOnly
+                        showIcon
                     />
                 </div>
 

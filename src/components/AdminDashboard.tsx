@@ -386,8 +386,8 @@ export default function AdminDashboard() {
                                     dateFormat="dd.MM.yyyy"
                                     locale="cs"
                                     className="date-picker"
-                                    readOnly
-                                    showIcon
+                                    onFocus={(e) => e.target.blur()}
+                                    onKeyDown={(e) => e.preventDefault()}
                                 />
                             </div>
 
@@ -413,8 +413,8 @@ export default function AdminDashboard() {
                                     locale="cs"
                                     placeholderText="Vyberte čas"
                                     className="date-picker"
-                                    readOnly
-                                    showIcon
+                                    onFocus={(e) => e.target.blur()}
+                                    onKeyDown={(e) => e.preventDefault()}
                                 />
                             </div>
 

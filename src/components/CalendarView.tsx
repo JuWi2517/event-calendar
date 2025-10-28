@@ -125,8 +125,8 @@ export default function CalendarView() {
                         placeholderText="Filtrovat podle dne"
                         dateFormat="d. MMMM yyyy"
                         isClearable
-                        readOnly
-                        showIcon
+                        onFocus={(e) => e.target.blur()}
+                        onKeyDown={(e) => e.preventDefault()}
                     />
                 </div>
 

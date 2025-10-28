@@ -205,8 +205,8 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     placeholderText="Vyberte jedno nebo více datumů"
                     className="date-picker"
                     required
-                    readOnly
-                    showIcon
+                    onFocus={(e) => e.target.blur()}
+                    onKeyDown={(e) => e.preventDefault()}
                 />
                 <label>Čas:</label>
                 <ReactDatePicker
@@ -223,7 +223,8 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     placeholderText="Vyberte čas"
                     className="date-picker"
                     required
-                    readOnly
+                    onFocus={(e) => e.target.blur()}
+                    onKeyDown={(e) => e.preventDefault()}
                 />
                 <label>Cena:</label>
                 <input type="number" name="price" value={form.price} onChange={handleChange} />

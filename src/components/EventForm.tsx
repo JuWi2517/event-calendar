@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react'; // <-- Import useRef
 import { addDoc, collection } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
-import { cs } from 'date-fns/locale/cs'; // <-- FIXED: Was default import, now named { cs }
+import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/EventForm.css';
+import MapyLogo from '../Photos/imageedit_1_2894183964.png';
 
 interface Suggestion {
     name: string;
@@ -17,17 +18,10 @@ interface Suggestion {
 
 registerLocale('cs', cs);
 
-// --- NEW HELPER FUNCTION TO AVOID TIMEZONE ISSUES ---
-/**
- * Converts a Date object to a 'YYYY-MM-DD' string based on its local date parts,
- * ignoring timezone conversions that cause off-by-one-day errors.
- * @param date The Date object to format.
- * @returns The formatted date string or an empty string if the date is null.
- */
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
@@ -74,6 +68,10 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const dropdownRef = useRef<HTMLUListElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // --- ADDED ---
+    // This ref will act as a flag
+    const justSelectedSuggestion = useRef(false);
+
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 
     const resetForm = () => {
@@ -86,6 +84,14 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     };
 
     useEffect(() => {
+        // --- MODIFIED ---
+        // If this effect is running because a suggestion was just selected,
+        // set the flag back to false and do nothing (don't fetch).
+        if (justSelectedSuggestion.current === true) {
+            justSelectedSuggestion.current = false;
+            return;
+        }
+
         const controller = new AbortController();
         if (form.location.length < 3) {
             setSuggestions([]);
@@ -111,10 +117,15 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             }
         })();
         return () => controller.abort();
-    }, [form.location]);
+    }, [form.location, MAPY_API_KEY]); // Dependency array is unchanged
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
+        if (name === 'location') {
+            justSelectedSuggestion.current = false;
+        }
+
         setForm(prev => ({ ...prev, [name]: value } as any));
     };
 
@@ -132,6 +143,11 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
 
     const handleSelect = (s: Suggestion) => {
+        // --- MODIFIED ---
+        // When a suggestion is selected, set the flag to true.
+        // This will prevent the useEffect from running again.
+        justSelectedSuggestion.current = true;
+
         setForm(prev => ({ ...prev, location: s.name, lat: s.lat, lng: s.lng }));
         setSuggestions([]);
     };
@@ -139,6 +155,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoadingSubmit(true);
+        // ... (rest of submit logic is unchanged)
         try {
             const normalizedFbUrl = await normalizeFacebookUrl(form.facebookUrl);
 
@@ -152,13 +169,11 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 posterPath = path;
             }
 
-            // --- FIXED: Use the new timezone-safe helper function ---
             const startDateString = toLocalDateString(form.startDate);
             const endDateString = toLocalDateString(form.endDate || form.startDate);
 
             const { poster, startDate, endDate, ...rest } = form;
 
-            // This object literal now correctly matches your Event.ts type
             const newEvent: Omit<Event, 'id'> & { posterPath: string } = {
                 ...rest,
                 facebookUrl: normalizedFbUrl,
@@ -185,16 +200,22 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="event-form-container">
             <form onSubmit={handleSubmit}>
                 <h2>Přidejte vaší událost</h2>
-                <label>Název:</label>
+                <p className="required-note" style={{ fontSize: '0.9em', color: '#aaa', marginTop: '-10px' }}>
+                    * Povinná pole
+                </p>
+
+                <label>Název: *</label>
                 <input name="title" value={form.title} onChange={handleChange} required />
-                <label>Kategorie:</label>
+
+                <label>Kategorie: *</label>
                 <select name="category" value={form.category} onChange={handleChange} required>
                     <option value="">Vyberte</option>
                     <option value="kultura">Kultura</option>
                     <option value="sport">Sport</option>
                     <option value="vzdělávání">Vzdělávání</option>
                 </select>
-                <label>Datum (nebo rozmezí):</label>
+
+                <label>Datum (nebo rozmezí): *</label>
                 <ReactDatePicker
                     startDate={form.startDate}
                     endDate={form.endDate}
@@ -202,13 +223,13 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     selectsRange
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
-                    placeholderText="Vyberte jedno nebo více datumů"
                     className="date-picker"
                     required
                     onFocus={(e) => e.target.blur()}
                     onKeyDown={(e) => e.preventDefault()}
                 />
-                <label>Čas:</label>
+
+                <label>Čas: *</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
                     onChange={date =>
@@ -226,16 +247,19 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     onFocus={(e) => e.target.blur()}
                     onKeyDown={(e) => e.preventDefault()}
                 />
+
                 <label>Cena:</label>
                 <input type="number" name="price" value={form.price} onChange={handleChange} />
-                <label>Místo:</label>
+
+                <label>Místo: *</label>
                 <input
                     name="location"
                     value={form.location}
-                    onChange={handleChange}
+                    onChange={handleChange} // <-- This now correctly calls our modified handleChange
                     autoComplete="off"
                     required
                 />
+
                 {suggestions.length > 0 && (
                     <ul ref={dropdownRef} className="suggestions">
                         {suggestions.map((s, i) => (
@@ -243,12 +267,47 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                                 {s.name}
                             </li>
                         ))}
+                        <li style={{
+                            padding: '8px 12px',
+                            textAlign: 'right',
+                            cursor: 'default',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                        }}>
+                            <a
+                                href="https://mapy.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    textDecoration: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <span style={{ fontSize: '0.8em', color: '#555' }}>Powered by</span>
+                                <img
+                                    src={MapyLogo} // Use the imported variable
+                                    alt="Mapy.com logo"
+                                    style={{
+                                        height: '15px',
+                                        width: 'auto',
+                                        verticalAlign: 'middle',
+                                    }}
+                                />
+                            </a>
+                        </li>
                     </ul>
                 )}
+
                 <label>Odkaz na událost:</label>
                 <input type="url" name="facebookUrl" value={form.facebookUrl} onChange={handleChange} />
+
                 <label>Plakát:</label>
                 <input type="file" accept="image/*" onChange={handleFile} ref={fileInputRef} />
+
                 <button type="submit" disabled={loadingSubmit}>
                     {loadingSubmit ? 'Odesílám...' : 'Odeslat'}
                 </button>

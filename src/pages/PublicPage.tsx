@@ -5,13 +5,13 @@ import HeroCarousel from '../components/PhotoCarousel';
 import '../css/PublicPage.css';
 
 
-import img1 from '../Photos/DSC_9627-Enhanced-NR.jpg';
+import img1 from '../Photos/DSC_0549-Enhanced-NR.jpg';
 import img2 from '../Photos/DSC_9903-Enhanced-NR.jpg';
-import img3 from '../Photos/DSC_0323-Enhanced-NR.jpg';
+import img3 from '../Photos/DSC_3193-Enhanced-NR.jpg';
 import img4 from '../Photos/DSC_9694-Enhanced-NR.jpg';
 
 
-const carouselImages = [img1, img2, img3, img4];
+const carouselImages = [img2, img1, img3, img4];
 
 
 export default function PublicPage(): React.ReactElement {
@@ -19,9 +19,8 @@ export default function PublicPage(): React.ReactElement {
 
         <div className="public-page bg">
             <HeroCarousel
-                // 3. Pass the new array to the 'images' prop.
                 images={carouselImages}
-                title="Kalendář akcí"
+                title="Kalendář akcí v Lounech"
                 subtitle="Kulturní a společenské události v Lounech"
             />
 

@@ -17,7 +17,6 @@ const monthNames = [
 ];
 
 // Helper to format date ranges
-// --- FIXED: 'endStr' now accepts string | undefined ---
 const formatDateRange = (startStr: string, endStr: string | undefined): string => {
     if (!startStr) return 'Datum nespecifikováno';
     const start = new Date(startStr).toLocaleDateString('cs-CZ');
@@ -56,9 +55,8 @@ export default function CalendarView() {
             const futureEvents: Event[] = [];
             for (const docSnap of snap.docs) {
                 const data = docSnap.data() as Event;
-                // Use endDate if available, otherwise fall back to startDate
                 const eventEndDate = new Date(data.endDate || data.startDate);
-                if (eventEndDate < today) continue; // Skip events that have already ended
+                if (eventEndDate < today) continue;
                 futureEvents.push({ id: docSnap.id, ...data });
             }
 
@@ -73,7 +71,6 @@ export default function CalendarView() {
                 grouped[key].push(ev);
             });
 
-            // Sort events within each month by start date
             Object.values(grouped).forEach(arr =>
                 arr.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
             );
@@ -96,11 +93,31 @@ export default function CalendarView() {
             eventStart.setHours(0, 0, 0, 0);
             eventEnd.setHours(0, 0, 0, 0);
             filterDate.setHours(0, 0, 0, 0);
-            // Check if the filter date falls within the event's date range
             return filterDate >= eventStart && filterDate <= eventEnd;
         });
 
     const sortedMonthKeys = Object.keys(eventsByMonth).sort();
+
+    // --- UPDATED LOGIC ---
+    // Calculate the date to open the date picker to, based on the month filter
+    let openToMonth: Date | undefined = undefined;
+    if (monthFilter) {
+        const monthIndex = monthNames.indexOf(monthFilter);
+        if (monthIndex > -1) {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonthIndex = today.getMonth(); // 0-11
+
+            // If selected month is in the past relative to the current month,
+            // assume the user means next year.
+            const targetYear = monthIndex < currentMonthIndex
+                ? currentYear + 1
+                : currentYear;
+
+            openToMonth = new Date(targetYear, monthIndex, 1);
+        }
+    }
+    // --- END UPDATED LOGIC ---
 
     return (
         <div className="calendar-view">
@@ -127,6 +144,7 @@ export default function CalendarView() {
                         isClearable
                         onFocus={(e) => e.target.blur()}
                         onKeyDown={(e) => e.preventDefault()}
+                        openToDate={openToMonth}
                     />
                 </div>
 
@@ -144,7 +162,6 @@ export default function CalendarView() {
                                             <h3>{ev.title}</h3>
                                         </div>
                                         <div className="event-meta">
-                                            {/* This call is now valid */}
                                             <p><Calendar size={16} /> {formatDateRange(ev.startDate, ev.endDate)}</p>
                                             <p><Clock size={16} /> {ev.start}</p>
                                             <p><MapPin size={16} /> {ev.location}</p>
@@ -163,11 +180,9 @@ export default function CalendarView() {
                         <div className="modal" onClick={e => e.stopPropagation()}>
                             {modalEvent.posterUrl && <img src={modalEvent.posterUrl} alt="" className="modal-poster" />}
                             <h2>{modalEvent.title}</h2>
-                            {/* This call is now valid */}
                             <p><Calendar size={16} /> Datum: {formatDateRange(modalEvent.startDate, modalEvent.endDate)}</p>
                             <p><Clock size={16} /> Začátek: {modalEvent.start}</p>
 
-                            {/* --- FIXED: Google Maps link is now correct --- */}
                             {modalEvent.lat && modalEvent.lng ? (
                                 <p>
                                     <MapPin size={16} /> Místo:{" "}
@@ -196,4 +211,4 @@ export default function CalendarView() {
             </div>
         </div>
     );
-}
+};

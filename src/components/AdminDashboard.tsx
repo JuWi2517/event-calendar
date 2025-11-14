@@ -24,8 +24,6 @@ import EventForm from './EventForm';
 
 registerLocale('cs', cs);
 
-// --- NEW HELPER FUNCTION (copied from EventForm) ---
-// Converts a Date object to a 'YYYY-MM-DD' string, ignoring timezones
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
     const year = date.getFullYear();
@@ -36,7 +34,6 @@ const toLocalDateString = (date: Date | null): string => {
 
 type WithId<T> = T & { id: string };
 
-// --- 1. FACEBOOK URL NORMALIZER FUNCTION (FROM PREVIOUS STEP) ---
 const FB_RESOLVER_ENDPOINT = 'https://us-central1-culture-calendar-4747b.cloudfunctions.net/api/resolve-link';
 
 async function normalizeFacebookUrl(rawUrl: string): Promise<string> {
@@ -164,8 +161,10 @@ export default function AdminDashboard() {
     const deletePosterIfAny = async (obj: Partial<Event>) => {
         try {
             const path = (obj as any)?.posterPath as string | undefined;
-            if (path) {
+            const resizedPosterPath = (obj as any)?.resizedPosterPath as string | undefined;
+            if (path && resizedPosterPath) {
                 await deleteObject(ref(storage, path));
+                await deleteObject(ref(storage, resizedPosterPath));
                 return;
             }
             if (obj.posterUrl) {
@@ -208,7 +207,6 @@ export default function AdminDashboard() {
         if (!editedEvent || !editedCollection) return;
         const copy: WithId<Event> = { ...editedEvent };
 
-        // --- NORMALIZE FACEBOOK URL BEFORE SAVING ---
         copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
 
         if (newImage) {

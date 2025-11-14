@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Event } from '../types/Event';
 import { Clock, MapPin, Tag, Calendar, CoinsIcon } from 'lucide-react';
@@ -8,6 +8,8 @@ import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/CalendarView.css';
+import PosterPathFinder from "../components/PosterPathFinder";
+import LoadOnScroll from "../components/LoadOnScroll";
 
 registerLocale('cs', cs);
 
@@ -16,7 +18,7 @@ const monthNames = [
     'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'
 ];
 
-// Helper to format date ranges
+// ... (funkce formatDateRange a formatMonthYearKey zůstávají stejné) ...
 const formatDateRange = (startStr: string, endStr: string | undefined): string => {
     if (!startStr) return 'Datum nespecifikováno';
     const start = new Date(startStr).toLocaleDateString('cs-CZ');
@@ -24,8 +26,6 @@ const formatDateRange = (startStr: string, endStr: string | undefined): string =
     const end = new Date(endStr).toLocaleDateString('cs-CZ');
     return `${start} - ${end}`;
 };
-
-// Helper to create a display-friendly heading (e.g., "Říjen 2025") from a key
 const formatMonthYearKey = (key: string): string => {
     const [year, monthNum] = key.split('-');
     const monthIndex = parseInt(monthNum, 10) - 1;
@@ -49,16 +49,23 @@ export default function CalendarView() {
         (async () => {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const q = query(collection(db, 'events'), where('status', '==', 'approved'));
+
+            // pokud máš helper toLocalDateString(date) -> 'YYYY-MM-DD'
+            const todayStr = today.toISOString().slice(0, 10); // '2025-11-14' – bezpečné pro lexikografické porovnání
+
+            const q = query(
+                collection(db, 'events'),
+                where('status', '==', 'approved'),
+                where('endDate', '>=', todayStr),
+                orderBy('endDate', 'asc')
+            );
+
             const snap = await getDocs(q);
 
-            const futureEvents: Event[] = [];
-            for (const docSnap of snap.docs) {
-                const data = docSnap.data() as Event;
-                const eventEndDate = new Date(data.endDate || data.startDate);
-                if (eventEndDate < today) continue;
-                futureEvents.push({ id: docSnap.id, ...data });
-            }
+            const futureEvents: Event[] = snap.docs.map(docSnap => ({
+                id: docSnap.id,
+                ...(docSnap.data() as Event),
+            }));
 
             const grouped: Record<string, Event[]> = {};
             futureEvents.forEach(ev => {
@@ -74,6 +81,7 @@ export default function CalendarView() {
             Object.values(grouped).forEach(arr =>
                 arr.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
             );
+
             setEventsByMonth(grouped);
         })();
     }, []);
@@ -98,26 +106,19 @@ export default function CalendarView() {
 
     const sortedMonthKeys = Object.keys(eventsByMonth).sort();
 
-    // --- UPDATED LOGIC ---
-    // Calculate the date to open the date picker to, based on the month filter
     let openToMonth: Date | undefined = undefined;
     if (monthFilter) {
         const monthIndex = monthNames.indexOf(monthFilter);
         if (monthIndex > -1) {
             const today = new Date();
             const currentYear = today.getFullYear();
-            const currentMonthIndex = today.getMonth(); // 0-11
-
-            // If selected month is in the past relative to the current month,
-            // assume the user means next year.
+            const currentMonthIndex = today.getMonth();
             const targetYear = monthIndex < currentMonthIndex
                 ? currentYear + 1
                 : currentYear;
-
             openToMonth = new Date(targetYear, monthIndex, 1);
         }
     }
-    // --- END UPDATED LOGIC ---
 
     return (
         <div className="calendar-view">
@@ -152,33 +153,59 @@ export default function CalendarView() {
                     const list = filtered(eventsByMonth[monthKey]);
                     if (!list || list.length === 0) return null;
                     return (
-                        <div key={monthKey} className="month-group">
-                            <h2>{formatMonthYearKey(monthKey)}</h2>
-                            <div className="events-grid">
-                                {list.map(ev => (
-                                    <div key={ev.id} className="event-card" onClick={() => setModalEvent(ev)}>
-                                        <div className="event-header">
-                                            {ev.posterUrl && <img src={ev.posterUrl} className="poster" alt="" />}
-                                            <h3>{ev.title}</h3>
+                        <LoadOnScroll
+                            key={monthKey}
+                            fallback={
+                                <div className="month-group-placeholder">
+                                    <h2>{formatMonthYearKey(monthKey)}</h2>
+                                    <div className="events-grid-placeholder" />
+                                </div>
+                            }
+                        >
+                            <div className="month-group">
+                                <h2>{formatMonthYearKey(monthKey)}</h2>
+                                <div className="events-grid">
+                                    {list.map(ev => (
+                                        <div key={ev.id} className="event-card" onClick={() => setModalEvent(ev)}>
+                                            <div className="event-header">
+
+
+                                                <PosterPathFinder
+                                                    path={ev.resizedPosterPath}
+                                                    fallbackPath={ev.posterPath}
+                                                    alt={ev.title}
+                                                    className="poster"
+                                                    loading="lazy"
+                                                />
+                                                <h3>{ev.title}</h3>
+                                            </div>
+                                            <div className="event-meta">
+                                                <p><Calendar size={16} /> {formatDateRange(ev.startDate, ev.endDate)}</p>
+                                                <p><Clock size={16} /> {ev.start}</p>
+                                                <p><MapPin size={16} /> {ev.location}</p>
+                                                {ev.price && <p><CoinsIcon size={16} /> {ev.price} Kč</p>}
+                                                {ev.category && <p><Tag size={16} /> {ev.category}</p>}
+                                            </div>
                                         </div>
-                                        <div className="event-meta">
-                                            <p><Calendar size={16} /> {formatDateRange(ev.startDate, ev.endDate)}</p>
-                                            <p><Clock size={16} /> {ev.start}</p>
-                                            <p><MapPin size={16} /> {ev.location}</p>
-                                            {ev.price && <p><CoinsIcon size={16} /> {ev.price} Kč</p>}
-                                            {ev.category && <p><Tag size={16} /> {ev.category}</p>}
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        </LoadOnScroll>
                     );
                 })}
 
                 {modalEvent && (
                     <div className="modal-backdrop" onClick={() => setModalEvent(null)}>
                         <div className="modal" onClick={e => e.stopPropagation()}>
-                            {modalEvent.posterUrl && <img src={modalEvent.posterUrl} alt="" className="modal-poster" />}
+
+                            <PosterPathFinder
+                                path={modalEvent.posterPath}
+                                fallbackPath={modalEvent.posterPath}
+                                alt={modalEvent.title}
+                                className="modal-poster"
+                                loading="eager"
+                            />
+
                             <h2>{modalEvent.title}</h2>
                             <p><Calendar size={16} /> Datum: {formatDateRange(modalEvent.startDate, modalEvent.endDate)}</p>
                             <p><Clock size={16} /> Začátek: {modalEvent.start}</p>
@@ -187,7 +214,7 @@ export default function CalendarView() {
                                 <p>
                                     <MapPin size={16} /> Místo:{" "}
                                     <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${modalEvent.lat},${modalEvent.lng}`}
+                                        href={`https://mapy.cz/s/${modalEvent.lat},${modalEvent.lng}`} // Použijeme Mapy.cz
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         title="Zobrazit na mapě"

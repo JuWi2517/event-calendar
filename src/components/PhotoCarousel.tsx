@@ -1,4 +1,4 @@
-// 1. Re-add 'useMemo' to the import list
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '../css/PhotoCarousel.css';
 
@@ -6,9 +6,9 @@ type Props = {
     images: string[];
     title: string;
     subtitle?: string;
-    intervalMs?: number;   // default 6000
+    intervalMs?: number;
     waveColor?: string;
-    height?: string;       // e.g. "68vh" or "760px"
+    height?: string;
 };
 
 export default function PhotoCarousel({
@@ -47,6 +47,8 @@ export default function PhotoCarousel({
                     alt=""
                     className={`hero-slide ${i === idx ? 'is-active' : ''}`}
                     draggable={false}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={i === 0 ? 'high' : 'auto'}
                 />
             ))}
 

@@ -12,4 +12,6 @@ export interface Event {
     facebookUrl?: string;
     posterUrl?: string;
     status: 'pending' | 'approved' | 'rejected';
+    posterPath: string;
+    resizedPosterPath: string;
 }

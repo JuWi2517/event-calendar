@@ -117,7 +117,6 @@
 .events-grid {
     display: grid;
     gap: 1.5rem;
-    /* Responsive grid: 1 column on small screens, up to 3 on large */
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
@@ -142,10 +141,9 @@
 
 .event-card .poster {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 3 / 4;
     object-fit: cover;
     display: block;
-    height: 400px;
 }
 
 .event-header {
@@ -211,10 +209,10 @@
 
 .modal-poster {
     width: 100%;
+    object-fit: cover;
+    display: block;
     border-radius: var(--radius-sm);
     margin-bottom: 1.5rem;
-    object-fit: cover;
-    height: auto;
 }
 
 .modal h2 {

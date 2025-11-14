@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'; // <-- Import useRef
+import { useState, useEffect, useRef } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
@@ -8,7 +8,8 @@ import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/EventForm.css';
-import MapyLogo from '../Photos/imageedit_1_2894183964.png';
+import imageCompression from 'browser-image-compression';
+import MapyLogo from "../assets/Photos/imageedit_1_2894183964.webp"
 
 interface Suggestion {
     name: string;
@@ -49,6 +50,24 @@ async function normalizeFacebookUrl(rawUrl: string): Promise<string> {
     return trimmedUrl;
 }
 
+function getResizedImagePath(originalPath: string): string {
+    if (!originalPath) {
+        return '';
+    }
+
+
+    const suffix = '_450x600.webp';
+
+    const lastDotIndex = originalPath.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+        return `${originalPath}${suffix}`;
+    }
+
+    const pathWithoutExtension = originalPath.substring(0, lastDotIndex);
+
+    return `${pathWithoutExtension}${suffix}`;
+}
+
 export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const [form, setForm] = useState({
         title: '',
@@ -68,8 +87,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const dropdownRef = useRef<HTMLUListElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // --- ADDED ---
-    // This ref will act as a flag
+    const [isCompressing, setIsCompressing] = useState(false);
+    const [compressionError, setCompressionError] = useState('');
+
     const justSelectedSuggestion = useRef(false);
 
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
@@ -81,12 +101,12 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         });
         setSuggestions([]);
         if (fileInputRef.current) fileInputRef.current.value = '';
+
+        setIsCompressing(false);
+        setCompressionError('');
     };
 
     useEffect(() => {
-        // --- MODIFIED ---
-        // If this effect is running because a suggestion was just selected,
-        // set the flag back to false and do nothing (don't fetch).
         if (justSelectedSuggestion.current === true) {
             justSelectedSuggestion.current = false;
             return;
@@ -117,7 +137,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             }
         })();
         return () => controller.abort();
-    }, [form.location, MAPY_API_KEY]); // Dependency array is unchanged
+    }, [form.location, MAPY_API_KEY]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -134,33 +154,63 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         setForm(prev => ({ ...prev, startDate: start, endDate: end }));
     };
 
-    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            setForm(prev => ({ ...prev, poster: file }));
+
+        setCompressionError('');
+        setIsCompressing(true);
+        setForm(prev => ({ ...prev, poster: null }));
+
+        if (!file) {
+            setIsCompressing(false);
+            return;
+        }
+
+        console.log(`Původní velikost: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+
+        const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebP: true, // Toto je důležité, protože extenze očekává webp
+            initialQuality: 0.8,
+        };
+
+        try {
+            const compressedFile = await imageCompression(file, options);
+            console.log(`Nová velikost: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            setForm(prev => ({ ...prev, poster: compressedFile }));
+        } catch (error) {
+            console.error("Chyba při kompresi:", error);
+            setCompressionError("Chyba při kompresi obrázku. Zkuste prosím jiný.");
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        } finally {
+            setIsCompressing(false);
         }
     };
 
 
     const handleSelect = (s: Suggestion) => {
-        // --- MODIFIED ---
-        // When a suggestion is selected, set the flag to true.
-        // This will prevent the useEffect from running again.
         justSelectedSuggestion.current = true;
-
         setForm(prev => ({ ...prev, location: s.name, lat: s.lat, lng: s.lng }));
         setSuggestions([]);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isCompressing) {
+            alert("Počkejte prosím, obrázek se stále zpracovává.");
+            return;
+        }
+
         setLoadingSubmit(true);
-        // ... (rest of submit logic is unchanged)
+
         try {
             const normalizedFbUrl = await normalizeFacebookUrl(form.facebookUrl);
 
             let posterUrl = '';
             let posterPath = '';
+
             if (form.poster) {
                 const path = `posters/${Date.now()}_${form.poster.name}`;
                 const imgRef = ref(storage, path);
@@ -169,24 +219,28 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 posterPath = path;
             }
 
+
+            const resizedPosterPath = getResizedImagePath(posterPath);
+
             const startDateString = toLocalDateString(form.startDate);
             const endDateString = toLocalDateString(form.endDate || form.startDate);
 
             const { poster, startDate, endDate, ...rest } = form;
 
-            const newEvent: Omit<Event, 'id'> & { posterPath: string } = {
+            const newEvent: Omit<Event, 'id'> & { posterPath: string; resizedPosterPath: string } = {
                 ...rest,
                 facebookUrl: normalizedFbUrl,
                 startDate: startDateString,
                 endDate: endDateString,
                 posterUrl,
                 posterPath,
+                resizedPosterPath,
                 status: 'pending',
                 lat: form.lat,
                 lng: form.lng,
             };
 
-            await addDoc(collection(db, 'submissions'), newEvent);
+            await addDoc(collection(db, 'submissions'), newEvent as any);
             resetForm();
             setLoadingSubmit(false);
             onSuccess();
@@ -229,7 +283,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     onKeyDown={(e) => e.preventDefault()}
                 />
 
-                <label>Čas: *</label>
+                <label>Začátek: *</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
                     onChange={date =>
@@ -255,7 +309,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 <input
                     name="location"
                     value={form.location}
-                    onChange={handleChange} // <-- This now correctly calls our modified handleChange
+                    onChange={handleChange}
                     autoComplete="off"
                     required
                 />
@@ -289,7 +343,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                             >
                                 <span style={{ fontSize: '0.8em', color: '#555' }}>Powered by</span>
                                 <img
-                                    src={MapyLogo} // Use the imported variable
+                                    src={MapyLogo}
                                     alt="Mapy.com logo"
                                     style={{
                                         height: '15px',
@@ -306,9 +360,19 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 <input type="url" name="facebookUrl" value={form.facebookUrl} onChange={handleChange} />
 
                 <label>Plakát:</label>
-                <input type="file" accept="image/*" onChange={handleFile} ref={fileInputRef} />
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFile}
+                    ref={fileInputRef}
+                    disabled={isCompressing}
+                />
 
-                <button type="submit" disabled={loadingSubmit}>
+                {isCompressing && <p className="compression-note">Probíhá komprese obrázku...</p>}
+                {compressionError && <p className="error-note">{compressionError}</p>}
+
+
+                <button type="submit" disabled={loadingSubmit || isCompressing}>
                     {loadingSubmit ? 'Odesílám...' : 'Odeslat'}
                 </button>
             </form>

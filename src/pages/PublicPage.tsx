@@ -1,11 +1,10 @@
 import React, { lazy } from 'react';
-// 1. IMPORT CalendarView byl ODSTRANĚN ODTUD
 import HeroCarousel from '../components/PhotoCarousel';
 import LoadOnScroll from '../components/LoadOnScroll';
 import '../css/PublicPage.css';
-import img9903 from '../assets/photos/DSC_9903-Enhanced-NR.webp';
-import img3193 from '../assets/photos/DSC_3193-Enhanced-NR.webp';
-import img9694 from '../assets/photos/DSC_9694-Enhanced-NR.webp';
+import img9903 from '../assets/Photos/DSC_9903-Enhanced-NR.webp';
+import img3193 from '../assets/Photos/DSC_3193-Enhanced-NR.webp';
+import img9694 from '../assets/Photos/DSC_9694-Enhanced-NR.webp';
 
 
 const carouselImages = [

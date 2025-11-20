@@ -7,10 +7,10 @@ interface Props {
     alt: string;
     className?: string;
     fallbackPath?: string;
-    loading?: 'lazy' | 'eager'; // <-- ZMĚNA
+    loading?: 'lazy' | 'eager';
 }
 
-export default function PosterPathFinder({ path, alt, className, fallbackPath, loading = 'lazy' }: Props) { // <-- ZMĚNA
+export default function PosterPathFinder({ path, alt, className, fallbackPath, loading = 'lazy' }: Props) {
     const [url, setUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 

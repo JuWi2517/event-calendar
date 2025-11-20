@@ -14,7 +14,7 @@ const carouselImages = [
 ];
 
 const EventForm = lazy(() => import('../components/EventForm'));
-const CalendarView = lazy(() => import('../components/CalendarView')); // <-- TOTO JE TA OPRAVA
+const CalendarView = lazy(() => import('../components/CalendarView'));
 
 export default function PublicPage(): React.ReactElement {
     return (

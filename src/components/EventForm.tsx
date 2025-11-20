@@ -171,8 +171,8 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         const options = {
             maxSizeMB: 1,
             maxWidthOrHeight: 1920,
-            useWebP: true, // Toto je důležité, protože extenze očekává webp
-            initialQuality: 0.8,
+            useWebP: true,
+            initialQuality: 0.9,
         };
 
         try {

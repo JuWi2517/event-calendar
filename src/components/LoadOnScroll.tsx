@@ -18,7 +18,7 @@ export default function LoadOnScroll({ children, fallback }: LazyLoadProps) {
                 }
             },
             {
-                rootMargin: '200px',
+                rootMargin: '500px',
             }
         );
 

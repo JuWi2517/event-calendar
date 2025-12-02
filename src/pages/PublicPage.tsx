@@ -1,11 +1,10 @@
-import React, { lazy } from 'react';
+import { lazy } from 'react';
 import HeroCarousel from '../components/PhotoCarousel';
 import LoadOnScroll from '../components/LoadOnScroll';
 import '../css/PublicPage.css';
 import img9903 from '../assets/Photos/DSC_9903-Enhanced-NR.webp';
 import img3193 from '../assets/Photos/DSC_3193-Enhanced-NR.webp';
 import img9694 from '../assets/Photos/DSC_9694-Enhanced-NR.webp';
-
 
 const carouselImages = [
     img9903,
@@ -16,7 +15,7 @@ const carouselImages = [
 const EventForm = lazy(() => import('../components/EventForm'));
 const CalendarView = lazy(() => import('../components/CalendarView'));
 
-export default function PublicPage(): React.ReactElement {
+export default function PublicPage() {
     return (
         <div className="public-page bg">
             <HeroCarousel
@@ -45,10 +44,20 @@ export default function PublicPage(): React.ReactElement {
                         <LoadOnScroll fallback={<div>Načítám formulář...</div>}>
                             <EventForm onSuccess={() => alert('Díky za podání!')} />
                         </LoadOnScroll>
-
                     </div>
                 </section>
             </main>
+            <section className="footer">
+                <div className="footer-container">
+                    <p className="footer-text">
+                        Web vytvořil: Jan Richter
+                        <span className="separator">•</span>
+                        Tento web nepoužívá žádné cookies.
+                        <span className="separator">•</span>
+                        Fotky od: <a href="https://www.instagram.com/ipetrivalska?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="footer-link">Ivana Petřivalská</a>
+                    </p>
+                </div>
+            </section>
         </div>
     );
 }

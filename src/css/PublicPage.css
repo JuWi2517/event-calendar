@@ -75,11 +75,50 @@ html, body {
 
 
 
-/* A centered wrapper specifically for the form */
+
 .form-shell {
     max-width: 900px;
     width: 100%;
     padding: 1rem;
     box-sizing: border-box;
-    margin: 32px auto 0; /* Updated: top, auto, NO bottom margin */
+    margin: 32px auto 0;
+}
+
+.footer {
+    padding: 2rem 1rem;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.footer-container {
+    max-width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.footer-text {
+    color: #a0a0a0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+.separator {
+    margin: 0 10px;
+    color: #555;
+    display: inline-block;
+}
+
+.footer-link {
+    color: #ffc107;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-weight: 500;
+}
+
+.footer-link:hover {
+    color: #fff;
+    text-decoration: underline;
 }

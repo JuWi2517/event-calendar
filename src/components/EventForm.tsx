@@ -56,7 +56,7 @@ function getResizedImagePath(originalPath: string): string {
     }
 
 
-    const suffix = '_450x600.webp';
+    const suffix = '_750x1080.webp';
 
     const lastDotIndex = originalPath.lastIndexOf('.');
     if (lastDotIndex === -1) {
@@ -166,8 +166,6 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             return;
         }
 
-        console.log(`Původní velikost: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-
         const options = {
             maxSizeMB: 1,
             maxWidthOrHeight: 1920,
@@ -177,11 +175,8 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
         try {
             const compressedFile = await imageCompression(file, options);
-            console.log(`Nová velikost: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
             setForm(prev => ({ ...prev, poster: compressedFile }));
         } catch (error) {
-            console.error("Chyba při kompresi:", error);
-            setCompressionError("Chyba při kompresi obrázku. Zkuste prosím jiný.");
             if (fileInputRef.current) fileInputRef.current.value = '';
         } finally {
             setIsCompressing(false);

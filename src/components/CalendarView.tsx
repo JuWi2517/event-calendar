@@ -18,7 +18,6 @@ const monthNames = [
     'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'
 ];
 
-// ... (funkce formatDateRange a formatMonthYearKey zůstávají stejné) ...
 const formatDateRange = (startStr: string, endStr: string | undefined): string => {
     if (!startStr) return 'Datum nespecifikováno';
     const start = new Date(startStr).toLocaleDateString('cs-CZ');
@@ -50,8 +49,7 @@ export default function CalendarView() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // pokud máš helper toLocalDateString(date) -> 'YYYY-MM-DD'
-            const todayStr = today.toISOString().slice(0, 10); // '2025-11-14' – bezpečné pro lexikografické porovnání
+            const todayStr = today.toISOString().slice(0, 10);
 
             const q = query(
                 collection(db, 'events'),

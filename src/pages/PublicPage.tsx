@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { Helmet } from 'react-helmet-async';
 import HeroCarousel from '../components/PhotoCarousel';
 import LoadOnScroll from '../components/LoadOnScroll';
 import '../css/PublicPage.css';
@@ -18,6 +19,14 @@ const CalendarView = lazy(() => import('../components/CalendarView'));
 export default function PublicPage() {
     return (
         <div className="public-page bg">
+
+            <Helmet>
+                <title>Kalendář akcí Louny | Kulturní přehled</title>
+                <meta name="description" content="Aktuální přehled kulturních a společenských akcí v Lounech. Koncerty, divadla, výstavy a další události na jednom místě." />
+                <meta name="keywords" content="Louny, kalendář akcí, kultura, divadlo, koncerty" />
+                <link rel="canonical" href="https://event-calendar-taupe.vercel.app/" />
+            </Helmet>
+
             <HeroCarousel
                 images={carouselImages}
                 title="Kalendář akcí v Lounech"
@@ -26,16 +35,7 @@ export default function PublicPage() {
 
             <main className="page-content">
                 <section className="calendar-section">
-                    <LoadOnScroll
-                        fallback={
-                            <div style={{ minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: '#ccc' }}>
-                                Nahrávám kalendář...
-                            </div>
-                        }
-                    >
-                        <CalendarView />
-                    </LoadOnScroll>
-
+                    <CalendarView />
                 </section>
 
                 <section className="form-section">

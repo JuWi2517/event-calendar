@@ -27,7 +27,6 @@ function PrivateRoute({ children }: { children: React.ReactElement }) {
 
     return user ? children : <Navigate to="/admin/login" replace />;
 }
-// cache bust 2
 
 export default function App() {
     return (

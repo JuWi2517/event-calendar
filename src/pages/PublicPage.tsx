@@ -1,5 +1,4 @@
 import { lazy } from 'react';
-import { Helmet } from 'react-helmet-async';
 import HeroCarousel from '../components/PhotoCarousel';
 import LoadOnScroll from '../components/LoadOnScroll';
 import '../css/PublicPage.css';
@@ -20,12 +19,10 @@ export default function PublicPage() {
     return (
         <div className="public-page bg">
 
-            <Helmet>
-                <title>Kalendář akcí Louny | Kulturní přehled</title>
-                <meta name="description" content="Aktuální přehled kulturních a společenských akcí v Lounech. Koncerty, divadla, výstavy a další události na jednom místě." />
-                <meta name="keywords" content="Louny, kalendář akcí, kultura, divadlo, koncerty" />
-                <link rel="canonical" href="https://event-calendar-taupe.vercel.app/" />
-            </Helmet>
+            <title>Kalendář akcí Louny | Kulturní přehled</title>
+            <meta name="description" content="Aktuální přehled kulturních a společenských akcí v Lounech. Koncerty, divadla, výstavy a další události na jednom místě." />
+            <meta name="keywords" content="Louny, kalendář akcí, kultura, divadlo, koncerty" />
+            <link rel="canonical" href="https://event-calendar-taupe.vercel.app/" />
 
             <HeroCarousel
                 images={carouselImages}

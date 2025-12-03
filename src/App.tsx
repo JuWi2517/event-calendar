@@ -1,6 +1,5 @@
 import React, { Suspense, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { HelmetProvider } from 'react-helmet-async';
 import PublicPage from "./pages/PublicPage";
 import { auth } from "./firebase";
 import { onAuthStateChanged,type User } from "firebase/auth";
@@ -32,7 +31,7 @@ function PrivateRoute({ children }: { children: React.ReactElement }) {
 
 export default function App() {
     return (
-        <HelmetProvider>
+
             <BrowserRouter>
                 <Suspense fallback={<div>Načítám stránku...</div>}>
                     <Routes>
@@ -51,6 +50,5 @@ export default function App() {
                     </Routes>
                 </Suspense>
             </BrowserRouter>
-        </HelmetProvider>
     );
 }

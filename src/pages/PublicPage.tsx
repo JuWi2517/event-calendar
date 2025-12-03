@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import HeroCarousel from '../components/PhotoCarousel';
+import PhotoCarousel from '../components/PhotoCarousel';
 import LoadOnScroll from '../components/LoadOnScroll';
 import '../css/PublicPage.css';
 import img9903 from '../assets/Photos/DSC_9903-Enhanced-NR.webp';
@@ -18,7 +18,7 @@ const CalendarView = lazy(() => import('../components/CalendarView'));
 export default function PublicPage() {
     return (
         <div className="public-page bg">
-            <HeroCarousel
+            <PhotoCarousel
                 images={carouselImages}
                 title="Kalendář akcí v Lounech"
                 subtitle="Kulturní a společenské události v Lounech"

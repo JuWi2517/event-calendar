@@ -124,9 +124,14 @@ export default function CalendarView() {
                 <div className="filter-bar">
                     <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
                         <option value="">Všechny kategorie</option>
-                        <option value="kultura">Kultura</option>
+                        <option value="koncert">Koncerty</option>
                         <option value="sport">Sport</option>
-                        <option value="vzdělávání">Vzdělávání</option>
+                        <option value="pro děti">Pro děti</option>
+                        <option value="divadlo">Divadlo</option>
+                        <option value="kino">Kino</option>
+                        <option value="výstava">Výstavy</option>
+                        <option value="přednáška">Přednášky</option>
+                        <option value="slavnost">Slavnosti</option>
                     </select>
 
                     <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)}>

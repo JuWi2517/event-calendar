@@ -258,10 +258,15 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
                 <label>Kategorie: *</label>
                 <select name="category" value={form.category} onChange={handleChange} required>
-                    <option value="">Vyberte</option>
-                    <option value="kultura">Kultura</option>
+                    <option value="">Všechny kategorie</option>
+                    <option value="koncert">Koncerty</option>
                     <option value="sport">Sport</option>
-                    <option value="vzdělávání">Vzdělávání</option>
+                    <option value="pro děti">Pro děti</option>
+                    <option value="divadlo">Divadlo</option>
+                    <option value="kino">Kino</option>
+                    <option value="výstava">Výstavy</option>
+                    <option value="přednáška">Přednášky</option>
+                    <option value="slavnost">Slavnosti</option>
                 </select>
 
                 <label>Datum (nebo rozmezí): *</label>

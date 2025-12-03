@@ -364,11 +364,9 @@ export default function AdminDashboard() {
                                 />
                             </div>
 
-                            {/* --- CHANGED: Date picker now supports range --- */}
                             <div className="field">
                                 <label>Datum (nebo rozmezí)</label>
                                 <ReactDatePicker
-                                    // Use 'selected' for the first date, 'startDate' for the actual start
                                     selected={
                                         editedEvent.startDate ? new Date(editedEvent.startDate) : null
                                     }
@@ -376,11 +374,10 @@ export default function AdminDashboard() {
                                         editedEvent.startDate ? new Date(editedEvent.startDate) : null
                                     }
                                     endDate={
-                                        // Handle empty string or null endDate
                                         editedEvent.endDate ? new Date(editedEvent.endDate) : null
                                     }
-                                    onChange={handleModalDateChange} // Use the new handler
-                                    selectsRange // Enable range selection
+                                    onChange={handleModalDateChange}
+                                    selectsRange
                                     dateFormat="dd.MM.yyyy"
                                     locale="cs"
                                     className="date-picker"
@@ -416,17 +413,21 @@ export default function AdminDashboard() {
                                 />
                             </div>
 
-                            {/* --- CHANGED: Category is now a dropdown --- */}
                             <div className="field">
                                 <label>Kategorie</label>
                                 <select
                                     value={editedEvent.category || ''}
                                     onChange={e => setField('category', e.target.value)}
                                 >
-                                    <option value="">Vyberte</option>
-                                    <option value="kultura">Kultura</option>
+                                    <option value="">Všechny kategorie</option>
+                                    <option value="koncert">Koncerty</option>
                                     <option value="sport">Sport</option>
-                                    <option value="vzdělávání">Vzdělávání</option>
+                                    <option value="pro děti">Pro děti</option>
+                                    <option value="divadlo">Divadlo</option>
+                                    <option value="kino">Kino</option>
+                                    <option value="výstava">Výstavy</option>
+                                    <option value="přednáška">Přednášky</option>
+                                    <option value="slavnost">Slavnosti</option>
                                 </select>
                             </div>
 

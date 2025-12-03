@@ -217,7 +217,7 @@ export default function CalendarView() {
                                 <p>
                                     <MapPin size={16} /> Místo:{" "}
                                     <a
-                                        href={`https://mapy.cz/s/${modalEvent.lat},${modalEvent.lng}`} // Použijeme Mapy.cz
+                                        href={`https://mapy.com/zakladni?q=${modalEvent.lat},${modalEvent.lng}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         title="Zobrazit na mapě"

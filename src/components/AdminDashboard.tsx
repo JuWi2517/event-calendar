@@ -67,11 +67,11 @@ export default function AdminDashboard() {
     const [editedCollection, setEditedCollection] = useState<'submissions' | 'events' | null>(null);
     const [newImage, setNewImage] = useState<File | null>(null);
 
-    // --- NEW: STATE FOR FULLSCREEN IMAGE VIEWER ---
+    // STATE FOR FULLSCREEN IMAGE VIEWER
     const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
 
     const [locQuery, setLocQuery] = useState('');
-    const [locSuggestions, setLocSuggestions] = useState<string[]>([]);
+    const [locSuggestions, setLocSuggestions] = useState<any[]>([]);
     const suggRef = useRef<HTMLUListElement>(null);
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
                 );
                 const data = await resp.json();
                 if (Array.isArray(data?.items)) {
-                    setLocSuggestions(data.items.map((it: any) => it.name));
+                    setLocSuggestions(data.items);
                 } else {
                     setLocSuggestions([]);
                 }
@@ -207,6 +207,20 @@ export default function AdminDashboard() {
         if (!editedEvent || !editedCollection) return;
         const copy: WithId<Event> = { ...editedEvent };
 
+        // VALIDATION: required fields
+        const missing: string[] = [];
+        if (!copy.title || String(copy.title).trim() === '') missing.push('Název');
+        if (!copy.location || String(copy.location).trim() === '') missing.push('Místo');
+        if (!copy.start || String(copy.start).trim() === '') missing.push('Čas');
+        if (!copy.category || String(copy.category).trim() === '') missing.push('Kategorie');
+        // startDate should be in YYYY-MM-DD format non-empty
+        if (!copy.startDate || String(copy.startDate).trim() === '') missing.push('Datum');
+
+        if (missing.length > 0) {
+            alert('Není vyplněno povinné pole: ' + missing.join(', '));
+            return;
+        }
+
         copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
 
         if (newImage) {
@@ -234,13 +248,32 @@ export default function AdminDashboard() {
         setEditedEvent(prev => (prev ? ({ ...prev, [key]: val } as WithId<Event>) : prev));
     };
 
-    // --- NEW: Handler for the modal's date range picker ---
+
+    const handleLocationSelect = (item: any) => {
+        const name = item.name || item.label || '';
+        const lat = item.position?.lat ?? 0;
+        const lng = item.position?.lon ?? 0;
+
+        setEditedEvent(prev => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                location: name,
+                lat: lat,
+                lng: lng
+            };
+        });
+
+        setLocQuery('');
+        setLocSuggestions([]);
+    };
+
     const handleModalDateChange = (dates: [Date | null, Date | null]) => {
         const [start, end] = dates;
         setEditedEvent(prev => (prev ? ({
             ...prev,
-            startDate: toLocalDateString(start), // Convert Date to YYYY-MM-DD
-            endDate: toLocalDateString(end),   // Convert Date to YYYY-MM-DD
+            startDate: toLocalDateString(start),
+            endDate: toLocalDateString(end),
         } as WithId<Event>) : prev));
     };
 
@@ -248,7 +281,6 @@ export default function AdminDashboard() {
         <div className="admin-page">
             <h2 className="admin-title">Správa událostí</h2>
 
-            {/* Sections for pending and approved events... (code remains the same) */}
             <section className="admin-section">
                 <div className="admin-section-head">
                     <h3>Neschválené návrhy</h3>
@@ -266,7 +298,6 @@ export default function AdminDashboard() {
                             <div className="card-body">
                                 <h4 className="card-title">{s.title || 'Bez názvu'}</h4>
                                 <div className="meta">
-                                    {/* --- FIXED: .date -> .startDate --- */}
                                     <span>{s.startDate}</span>
                                     {s.start && <span>{s.start}</span>}
                                     {s.location && <span>{s.location}</span>}
@@ -355,12 +386,12 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="modal-grid">
-                            {/* All previous fields... */}
                             <div className="field">
                                 <label>Název</label>
                                 <input
                                     value={editedEvent.title || ''}
                                     onChange={e => setField('title', e.target.value)}
+                                    required
                                 />
                             </div>
 
@@ -383,6 +414,7 @@ export default function AdminDashboard() {
                                     className="date-picker"
                                     onFocus={(e) => e.target.blur()}
                                     onKeyDown={(e) => e.preventDefault()}
+                                    required
                                 />
                             </div>
 
@@ -410,6 +442,7 @@ export default function AdminDashboard() {
                                     className="date-picker"
                                     onFocus={(e) => e.target.blur()}
                                     onKeyDown={(e) => e.preventDefault()}
+                                    required
                                 />
                             </div>
 
@@ -418,6 +451,7 @@ export default function AdminDashboard() {
                                 <select
                                     value={editedEvent.category || ''}
                                     onChange={e => setField('category', e.target.value)}
+                                    required
                                 >
                                     <option value="">Všechny kategorie</option>
                                     <option value="koncert">Koncerty</option>
@@ -438,35 +472,39 @@ export default function AdminDashboard() {
                                     onChange={e => setField('price', e.target.value)}
                                 />
                             </div>
+
+                            {/* --- LOCATION FIELD: STRICT TYPE FIX --- */}
                             <div className="field">
                                 <label>Místo</label>
                                 <input
                                     value={editedEvent.location || ''}
                                     onChange={e => {
-                                        setField('location', e.target.value);
-                                        setLocQuery(e.target.value);
+                                        const val = e.target.value;
+                                        setEditedEvent(prev => prev ? {
+                                            ...prev,
+                                            location: val
+                                            // NEVYMAZÁVÁME lat/lng. Musí zůstat číslem.
+                                            // Aktualizují se až po kliknutí na našeptávač.
+                                        } : null);
+                                        setLocQuery(val);
                                     }}
                                     autoComplete="off"
+                                    required
                                 />
                                 {locSuggestions.length > 0 && (
                                     <ul className="suggestions" ref={suggRef}>
-                                        {locSuggestions.map((s, i) => (
+                                        {locSuggestions.map((item, i) => (
                                             <li
                                                 key={i}
-                                                onClick={() => {
-                                                    setField('location', s);
-                                                    setLocQuery('');
-                                                    setLocSuggestions([]);
-                                                }}
+                                                onClick={() => handleLocationSelect(item)}
                                             >
-                                                {s}
+                                                {item.name} {item.label && <small>({item.label})</small>}
                                             </li>
                                         ))}
                                     </ul>
                                 )}
                             </div>
 
-                            {/* --- FACEBOOK URL FIELD --- */}
                             <div className="field">
                                 <label>Facebook URL</label>
                                 <input
@@ -483,7 +521,6 @@ export default function AdminDashboard() {
                                         src={editedEvent.posterUrl}
                                         className="poster-preview"
                                         alt="Poster"
-                                        // --- FIXED: posterUrl || null ---
                                         onClick={() => setFullScreenImageUrl(editedEvent.posterUrl || null)}
                                         title="Zobrazit celý plakát"
                                     />
@@ -508,7 +545,6 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* --- NEW: FULLSCREEN IMAGE VIEWER --- */}
             {fullScreenImageUrl && (
                 <div className="fullscreen-viewer" onClick={() => setFullScreenImageUrl(null)}>
                     <img src={fullScreenImageUrl} alt="Fullscreen Poster" />

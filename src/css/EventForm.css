@@ -1,11 +1,13 @@
-:root{
-    --bg-body: #0f141b;          /* barva pozadí stránky (už ji asi máš) */
-    --card:    #161c24;          /* panel formuláře */
-    --card-2:  #1b2230;          /* hover/states */
+/* EventForm.css */
+
+:root {
+    --bg-body: #0f141b;
+    --card:    #161c24;
+    --card-2:  #1b2230;
     --text:    #e7edf7;
     --muted:   #9aa4b2;
     --line:    #2a3242;
-    --accent:  #d1b15a;          /* zlatý proužek jako u nadpisů */
+    --accent:  #d1b15a;
     --radius:  14px;
 
     /* tvůj gradient */
@@ -15,25 +17,21 @@
 }
 
 /* Kontejner – centrování a šířka */
-/* Container — properly centered on all screens */
 .event-form-container {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
-    /* Make sure it’s not offset to the right */
     width: 100%;
-    max-width: 100%; /* prevent overflow */
+    max-width: 100%;
     margin: 40px auto 80px;
-    padding: 0 1rem; /* equal padding left/right */
-
+    padding: 0 1rem;
     box-sizing: border-box;
 }
 
-/* Form card — centered within the container */
+/* Form card */
 .event-form-container form {
     width: 100%;
-    max-width: 520px; /* fixed readable width */
+    max-width: 520px;
     background: linear-gradient(
             180deg,
             rgba(255, 255, 255, 0.02),
@@ -45,18 +43,19 @@
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     padding: 22px 22px 26px;
     color: var(--text);
-    margin: 0 auto; /* center the form block */
+    margin: 0 auto;
 }
 
 /* Nadpis se zlatou linkou */
-.event-form-container h2{
+.event-form-container h2 {
     margin: 6px 0 18px;
     font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: .2px;
     text-align: center;
 }
-.event-form-container h2::after{
+
+.event-form-container h2::after {
     content: "";
     display: block;
     width: 120px;
@@ -64,11 +63,10 @@
     background: var(--accent);
     border-radius: 999px;
     margin: 10px auto 0;
-
 }
 
 /* Popisky */
-.event-form-container label{
+.event-form-container label {
     display: block;
     margin: 14px 0 6px;
     color: var(--muted);
@@ -76,9 +74,10 @@
 }
 
 /* Vstupy */
+/* Note: .date-picker is your new button component */
 .event-form-container input,
 .event-form-container select,
-.event-form-container .date-picker{
+.event-form-container .date-picker {
     width: 100%;
     box-sizing: border-box;
     background: var(--card-2);
@@ -88,30 +87,47 @@
     padding: 12px 14px;
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+
+    /* Ensure font matches everywhere */
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+/* SPECIFIC FIX FOR THE BUTTON INPUTS
+   Buttons center text by default. This forces them to look like text inputs. */
+button.date-picker {
+    text-align: left;
+    cursor: pointer;
 }
 
 .event-form-container input::placeholder,
-.event-form-container .date-picker::placeholder{ color: #8e96a4; }
+.event-form-container .date-picker::placeholder {
+    color: #8e96a4;
+}
 
 .event-form-container input:focus,
 .event-form-container select:focus,
-.event-form-container .date-picker:focus{
+.event-form-container .date-picker:focus {
     border-color: rgba(32,12,207,.65);
     box-shadow: 0 0 0 4px rgba(32,12,207,.18);
 }
 
-/* DatePicker z knihovny – sjednocení vzhledu */
-.event-form-container .react-datepicker-wrapper{ width:100%; }
-.event-form-container .react-datepicker-popper{ z-index: 50; }
+/* DatePicker z knihovny */
+.event-form-container .react-datepicker-wrapper {
+    width: 100%;
+}
+.event-form-container .react-datepicker-popper {
+    z-index: 50;
+}
 
-/* Soubor (nebudu schovávat nativní, jen ho “zpaneluju”) */
-.event-form-container input[type="file"]{
+/* Soubor */
+.event-form-container input[type="file"] {
     padding: 10px 12px;
     cursor: pointer;
 }
 
 /* Dropdown návrhů míst */
-.event-form-container .suggestions{
+.event-form-container .suggestions {
     list-style: none;
     margin: 6px 0 0;
     padding: 6px;
@@ -122,18 +138,19 @@
     overflow: auto;
     box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
-.event-form-container .suggestions li{
+
+.event-form-container .suggestions li {
     padding: 10px 12px;
     border-radius: 8px;
     cursor: pointer;
     color: var(--text);
 }
-.event-form-container .suggestions li:hover{
+
+.event-form-container .suggestions li:hover {
     background: rgba(255,255,255,.04);
 }
 
-/* Tlačítko – gradient podle tvých barev */
-/* --- Styl pouze pro tlačítko Odeslat --- */
+/* Tlačítko Odeslat */
 .event-form-container form button[type="submit"] {
     margin-top: 16px;
     width: 100%;
@@ -147,8 +164,7 @@
     transition: filter 0.15s ease, transform 0.08s ease;
 }
 
-/* Hover a kliknutí */
-.form button[type="submit"]:hover {
+.event-form-container form button[type="submit"]:hover {
     background-color: #FFD700;
 }
 
@@ -156,15 +172,17 @@
     transform: translateY(1px);
 }
 
-/* Disabled stav */
 .event-form-container form button[type="submit"][disabled] {
     opacity: 0.7;
     cursor: not-allowed;
 }
 
-
-/* Responsivní drobnosti – víc prostoru na větších displejích */
-@media (min-width: 900px){
-    .event-form-container{ width: min(560px, 92vw); }
-    .event-form-container form{ padding: 26px 26px 30px; }
+/* Responsivní drobnosti */
+@media (min-width: 900px) {
+    .event-form-container {
+        width: min(560px, 92vw);
+    }
+    .event-form-container form {
+        padding: 26px 26px 30px;
+    }
 }

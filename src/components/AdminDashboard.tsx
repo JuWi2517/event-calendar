@@ -232,8 +232,10 @@ export default function AdminDashboard() {
             return;
         }
 
+        // 3. VALIDATION: Check if Facebook URL is actually a URL
         if (copy.facebookUrl && copy.facebookUrl.trim() !== '') {
             try {
+                // new URL() throws if the format is invalid (e.g. missing https://)
                 new URL(copy.facebookUrl);
             } catch (error) {
                 alert('Zadaná Facebook URL není platná. Ujistěte se, že odkaz začíná na "https://".');
@@ -493,11 +495,11 @@ export default function AdminDashboard() {
                                 <label>Cena</label>
                                 <input
                                     value={editedEvent.price || ''}
-                                    type="number"
                                     onChange={e => setField('price', e.target.value)}
                                 />
                             </div>
 
+                            {/* --- LOCATION FIELD --- */}
                             <div className="field">
                                 <label>Místo</label>
                                 <input
@@ -549,6 +551,7 @@ export default function AdminDashboard() {
                                     type="url"
                                     value={editedEvent.facebookUrl || ''}
                                     onChange={e => setField('facebookUrl', e.target.value)}
+                                    placeholder="https://facebook.com/..."
                                 />
                             </div>
 

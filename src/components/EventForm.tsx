@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, forwardRef } from 'react'; // Added forwardRef
+import { useState, useEffect, useRef } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
@@ -18,22 +18,6 @@ interface Suggestion {
 }
 
 registerLocale('cs', cs);
-
-// --- 1. Add Custom Input Component ---
-// This acts as a button so the mobile keyboard never triggers
-// eslint-disable-next-line react/display-name
-const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
-    ({ value, onClick, placeholder, className }, ref) => (
-        <button
-            className={className} // Pass the className through (e.g., "date-picker")
-            onClick={onClick}
-            ref={ref}
-            type="button"
-        >
-            {value || placeholder}
-        </button>
-    )
-);
 
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
@@ -303,10 +287,10 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     selectsRange
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
-                    customInput={<DatePickerCustomInput className="date-picker" />}
-                    placeholderText="Vyberte datum"
+                    className="date-picker"
                     required
-                    isClearable
+                    onFocus={(e) => e.target.blur()}
+                    onKeyDown={(e) => e.preventDefault()}
                 />
 
                 <label>Začátek: *</label>
@@ -322,9 +306,10 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     timeCaption="Čas"
                     dateFormat="HH:mm"
                     placeholderText="Vyberte čas"
-                    customInput={<DatePickerCustomInput className="date-picker" />}
+                    className="date-picker"
                     required
-                    isClearable
+                    onFocus={(e) => e.target.blur()}
+                    onKeyDown={(e) => e.preventDefault()}
                 />
 
                 <label>Cena:</label>

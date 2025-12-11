@@ -27,7 +27,7 @@ registerLocale('cs', cs);
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
@@ -70,8 +70,10 @@ export default function AdminDashboard() {
     // STATE FOR FULLSCREEN IMAGE VIEWER
     const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
 
+    // LOCATION LOGIC
     const [locQuery, setLocQuery] = useState('');
     const [locSuggestions, setLocSuggestions] = useState<any[]>([]);
+    const [locationError, setLocationError] = useState(false);
     const suggRef = useRef<HTMLUListElement>(null);
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 
@@ -121,6 +123,7 @@ export default function AdminDashboard() {
         setModalOpen(true);
         setLocQuery('');
         setLocSuggestions([]);
+        setLocationError(false);
     };
 
     const closeModal = () => {
@@ -130,6 +133,7 @@ export default function AdminDashboard() {
         setNewImage(null);
         setLocQuery('');
         setLocSuggestions([]);
+        setLocationError(false);
     };
 
     const approve = async (id: string) => {
@@ -207,13 +211,20 @@ export default function AdminDashboard() {
         if (!editedEvent || !editedCollection) return;
         const copy: WithId<Event> = { ...editedEvent };
 
-        // VALIDATION: required fields
+        // 1. VALIDATION: Required fields
         const missing: string[] = [];
         if (!copy.title || String(copy.title).trim() === '') missing.push('Název');
-        if (!copy.location || String(copy.location).trim() === '') missing.push('Místo');
+
+        // 2. VALIDATION: Strict Location Check
+        if (!copy.location || String(copy.location).trim() === '') {
+            missing.push('Místo');
+        } else if (copy.lat === 0 || copy.lng === 0) {
+            setLocationError(true);
+            return; // Stop submission if no suggestion selected
+        }
+
         if (!copy.start || String(copy.start).trim() === '') missing.push('Čas');
         if (!copy.category || String(copy.category).trim() === '') missing.push('Kategorie');
-        // startDate should be in YYYY-MM-DD format non-empty
         if (!copy.startDate || String(copy.startDate).trim() === '') missing.push('Datum');
 
         if (missing.length > 0) {
@@ -221,8 +232,19 @@ export default function AdminDashboard() {
             return;
         }
 
+        if (copy.facebookUrl && copy.facebookUrl.trim() !== '') {
+            try {
+                new URL(copy.facebookUrl);
+            } catch (error) {
+                alert('Zadaná Facebook URL není platná. Ujistěte se, že odkaz začíná na "https://".');
+                return;
+            }
+        }
+
+        // 4. Normalize URL (if valid)
         copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
 
+        // 5. Image Upload Logic
         if (newImage) {
             await deletePosterIfAny(copy);
             const newPath = `posters/${Date.now()}_${newImage.name}`;
@@ -232,6 +254,7 @@ export default function AdminDashboard() {
             (copy as any).posterPath = newPath;
         }
 
+        // 6. Save to Firestore
         const { id, ...payload } = copy;
         await updateDoc(doc(db, editedCollection, id), payload);
 
@@ -264,6 +287,7 @@ export default function AdminDashboard() {
             };
         });
 
+        setLocationError(false);
         setLocQuery('');
         setLocSuggestions([]);
     };
@@ -469,11 +493,11 @@ export default function AdminDashboard() {
                                 <label>Cena</label>
                                 <input
                                     value={editedEvent.price || ''}
+                                    type="number"
                                     onChange={e => setField('price', e.target.value)}
                                 />
                             </div>
 
-                            {/* --- LOCATION FIELD: STRICT TYPE FIX --- */}
                             <div className="field">
                                 <label>Místo</label>
                                 <input
@@ -482,15 +506,29 @@ export default function AdminDashboard() {
                                         const val = e.target.value;
                                         setEditedEvent(prev => prev ? {
                                             ...prev,
-                                            location: val
-                                            // NEVYMAZÁVÁME lat/lng. Musí zůstat číslem.
-                                            // Aktualizují se až po kliknutí na našeptávač.
+                                            location: val,
+                                            lat: 0, // Reset lat
+                                            lng: 0  // Reset lng
                                         } : null);
                                         setLocQuery(val);
+                                        setLocationError(false);
                                     }}
                                     autoComplete="off"
                                     required
+                                    className={locationError ? 'input-error' : ''}
                                 />
+
+                                {locationError && (
+                                    <div className="validation-error">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                        <span>Prosím vyberte konkrétní místo z nabídky.</span>
+                                    </div>
+                                )}
+
                                 {locSuggestions.length > 0 && (
                                     <ul className="suggestions" ref={suggRef}>
                                         {locSuggestions.map((item, i) => (

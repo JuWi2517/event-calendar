@@ -55,16 +55,12 @@ function getResizedImagePath(originalPath: string): string {
         return '';
     }
 
-
     const suffix = '_750x1080.webp';
-
     const lastDotIndex = originalPath.lastIndexOf('.');
     if (lastDotIndex === -1) {
         return `${originalPath}${suffix}`;
     }
-
     const pathWithoutExtension = originalPath.substring(0, lastDotIndex);
-
     return `${pathWithoutExtension}${suffix}`;
 }
 
@@ -82,8 +78,11 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         lat: 0,
         lng: 0,
     });
+
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [locationError, setLocationError] = useState(false); // New state for validation error
+
     const dropdownRef = useRef<HTMLUListElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,6 +99,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             price: '', location: '', facebookUrl: '', poster: null, lat: 0, lng: 0,
         });
         setSuggestions([]);
+        setLocationError(false); // Reset error
         if (fileInputRef.current) fileInputRef.current.value = '';
 
         setIsCompressing(false);
@@ -144,9 +144,12 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
         if (name === 'location') {
             justSelectedSuggestion.current = false;
+            setLocationError(false); // Clear error when typing
+            // Force reset coordinates to 0 when user types manually
+            setForm(prev => ({ ...prev, location: value, lat: 0, lng: 0 }));
+        } else {
+            setForm(prev => ({ ...prev, [name]: value } as any));
         }
-
-        setForm(prev => ({ ...prev, [name]: value } as any));
     };
 
     const handleDateChange = (dates: [Date | null, Date | null]) => {
@@ -183,15 +186,23 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         }
     };
 
-
     const handleSelect = (s: Suggestion) => {
         justSelectedSuggestion.current = true;
+        // Set coordinates and clear error
         setForm(prev => ({ ...prev, location: s.name, lat: s.lat, lng: s.lng }));
+        setLocationError(false);
         setSuggestions([]);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 1. Validation Check: Ensure lat/lng are set
+        if (form.lat === 0 || form.lng === 0) {
+            setLocationError(true);
+            // Optionally scroll to location input here
+            return;
+        }
 
         if (isCompressing) {
             alert("Počkejte prosím, obrázek se stále zpracovává.");
@@ -213,7 +224,6 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 posterUrl = await getDownloadURL(imgRef);
                 posterPath = path;
             }
-
 
             const resizedPosterPath = getResizedImagePath(posterPath);
 
@@ -312,7 +322,19 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     onChange={handleChange}
                     autoComplete="off"
                     required
+                    className={locationError ? 'input-error' : ''}
                 />
+
+                {locationError && (
+                    <div className="validation-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span>Prosím vyberte konkrétní místo z nabídky.</span>
+                    </div>
+                )}
 
                 {suggestions.length > 0 && (
                     <ul ref={dropdownRef} className="suggestions">

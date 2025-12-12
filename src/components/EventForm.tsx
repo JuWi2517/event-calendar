@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db, storage } from '../firebase';
 import type { Event } from '../types/Event';
@@ -18,6 +18,21 @@ interface Suggestion {
 }
 
 registerLocale('cs', cs);
+
+// --- 1. Custom Input to prevent mobile keyboard ---
+// eslint-disable-next-line react/display-name
+const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
+    ({ value, onClick, placeholder, className }, ref) => (
+        <button
+            className={className}
+            onClick={onClick}
+            ref={ref}
+            type="button" // Important: behaves like a button, not text input
+        >
+            {value || placeholder}
+        </button>
+    )
+);
 
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
@@ -78,10 +93,11 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         lat: 0,
         lng: 0,
     });
-
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-    const [locationError, setLocationError] = useState(false); // New state for validation error
+
+    // VALIDATION STATE
+    const [locationError, setLocationError] = useState(false);
 
     const dropdownRef = useRef<HTMLUListElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +161,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         if (name === 'location') {
             justSelectedSuggestion.current = false;
             setLocationError(false); // Clear error when typing
-            // Force reset coordinates to 0 when user types manually
+            // Force reset coordinates to 0 so they must re-select
             setForm(prev => ({ ...prev, location: value, lat: 0, lng: 0 }));
         } else {
             setForm(prev => ({ ...prev, [name]: value } as any));
@@ -186,9 +202,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         }
     };
 
+
     const handleSelect = (s: Suggestion) => {
         justSelectedSuggestion.current = true;
-        // Set coordinates and clear error
         setForm(prev => ({ ...prev, location: s.name, lat: s.lat, lng: s.lng }));
         setLocationError(false);
         setSuggestions([]);
@@ -197,11 +213,20 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // 1. Validation Check: Ensure lat/lng are set
+        // 1. Validation: Check Location Lat/Lng
         if (form.lat === 0 || form.lng === 0) {
             setLocationError(true);
-            // Optionally scroll to location input here
             return;
+        }
+
+        // 2. Validation: Check URL validity (if present)
+        if (form.facebookUrl && form.facebookUrl.trim() !== '') {
+            try {
+                new URL(form.facebookUrl);
+            } catch (error) {
+                alert('Zadaná URL není platná. Ujistěte se, že odkaz začíná na "https://".');
+                return;
+            }
         }
 
         if (isCompressing) {
@@ -224,6 +249,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 posterUrl = await getDownloadURL(imgRef);
                 posterPath = path;
             }
+
 
             const resizedPosterPath = getResizedImagePath(posterPath);
 
@@ -287,10 +313,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     selectsRange
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
-                    className="date-picker"
+                    // Use CustomInput to prevent mobile keyboard
+                    customInput={<DatePickerCustomInput className="date-picker" />}
                     required
-                    onFocus={(e) => e.target.blur()}
-                    onKeyDown={(e) => e.preventDefault()}
                 />
 
                 <label>Začátek: *</label>
@@ -306,10 +331,8 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     timeCaption="Čas"
                     dateFormat="HH:mm"
                     placeholderText="Vyberte čas"
-                    className="date-picker"
+                    customInput={<DatePickerCustomInput className="date-picker" />}
                     required
-                    onFocus={(e) => e.target.blur()}
-                    onKeyDown={(e) => e.preventDefault()}
                 />
 
                 <label>Cena:</label>
@@ -325,6 +348,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     className={locationError ? 'input-error' : ''}
                 />
 
+                {/* Validation Error Message */}
                 {locationError && (
                     <div className="validation-error">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

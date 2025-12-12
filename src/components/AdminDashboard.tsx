@@ -462,6 +462,7 @@ export default function AdminDashboard() {
                                 <label>Cena</label>
                                 <input
                                     value={editedEvent.price || ''}
+                                    type="number"
                                     onChange={e => setField('price', e.target.value)}
                                 />
                             </div>

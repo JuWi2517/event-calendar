@@ -40,6 +40,16 @@ const formatDisplayDate = (dateStr: string | undefined): string => {
     return `${day}. ${month}. ${year}`;
 };
 
+// --- HELPER: Calculate resized image path ---
+function getResizedImagePath(originalPath: string): string {
+    if (!originalPath) return '';
+    const suffix = '_750x1080.webp';
+    const lastDotIndex = originalPath.lastIndexOf('.');
+    if (lastDotIndex === -1) return `${originalPath}${suffix}`;
+    const pathWithoutExtension = originalPath.substring(0, lastDotIndex);
+    return `${pathWithoutExtension}${suffix}`;
+}
+
 // --- SVG ICONS COMPONENTS ---
 const IconCalendar = () => (
     <svg className="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -183,24 +193,34 @@ export default function AdminDashboard() {
         setPending(p => [{ ...item, status: 'pending' }, ...p]);
     };
 
+    // --- IMPROVED DELETE LOGIC ---
+    // Now attempts to delete the resized version even if not explicitly in the object
     const deletePosterIfAny = async (obj: Partial<Event>) => {
-        try {
-            const path = (obj as any)?.posterPath as string | undefined;
-            const resizedPosterPath = (obj as any)?.resizedPosterPath as string | undefined;
-            if (path && resizedPosterPath) {
-                await deleteObject(ref(storage, path));
-                await deleteObject(ref(storage, resizedPosterPath));
-                return;
-            }
-            if (obj.posterUrl) {
+        let pathToDelete = (obj as any)?.posterPath as string | undefined;
+
+        // If no explicit path, try to parse it from the URL
+        if (!pathToDelete && obj.posterUrl) {
+            try {
                 const u = new URL(obj.posterUrl);
                 const encoded = u.pathname.split('/o/')[1];
                 if (encoded) {
-                    const fullPath = decodeURIComponent(encoded);
-                    await deleteObject(ref(storage, fullPath));
+                    pathToDelete = decodeURIComponent(encoded);
                 }
+            } catch {}
+        }
+
+        if (pathToDelete) {
+            try {
+                // 1. Delete original
+                await deleteObject(ref(storage, pathToDelete));
+
+                // 2. Delete resized (calculate path to be safe)
+                const resizedPath = getResizedImagePath(pathToDelete);
+                await deleteObject(ref(storage, resizedPath));
+            } catch (error) {
+                console.warn("Could not delete some images (maybe they didn't exist):", error);
             }
-        } catch {}
+        }
     };
 
     const removeCard = async (id: string, from: 'submissions' | 'events') => {
@@ -248,13 +268,20 @@ export default function AdminDashboard() {
         }
         copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
 
+        // --- IMAGE UPLOAD LOGIC UPDATE ---
         if (newImage) {
+            // 1. Delete old images
             await deletePosterIfAny(copy);
+
+            // 2. Upload new image
             const newPath = `posters/${Date.now()}_${newImage.name}`;
             const newRef = ref(storage, newPath);
             await uploadBytes(newRef, newImage);
+
+            // 3. Update paths in the object
             copy.posterUrl = await getDownloadURL(newRef);
             (copy as any).posterPath = newPath;
+            (copy as any).resizedPosterPath = getResizedImagePath(newPath); // Save this for future deletions!
         }
 
         const { id, ...payload } = copy;
@@ -294,7 +321,6 @@ export default function AdminDashboard() {
         } as WithId<Event>) : prev));
     };
 
-    // --- REUSABLE CARD RENDER FUNCTION ---
     const renderCard = (item: WithId<Event>, type: 'submissions' | 'events') => (
         <article
             key={item.id}
@@ -306,7 +332,6 @@ export default function AdminDashboard() {
             <div className="card-body">
                 <h4 className="card-title">{item.title || 'Bez názvu'}</h4>
 
-                {/* NEW VERTICAL LAYOUT */}
                 <div className="card-details">
                     <div className="card-row">
                         <IconCalendar />
@@ -462,7 +487,6 @@ export default function AdminDashboard() {
                                 <label>Cena</label>
                                 <input
                                     value={editedEvent.price || ''}
-                                    type="number"
                                     onChange={e => setField('price', e.target.value)}
                                 />
                             </div>

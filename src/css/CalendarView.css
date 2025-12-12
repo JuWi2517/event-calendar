@@ -43,41 +43,33 @@
 /* --- Filter Bar --- */
 .filter-bar {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+    align-items: center; /* Vertically aligns all filter items */
+    flex-wrap: wrap;     /* Allows items to wrap on small screens */
+    gap: 1rem;           /* Creates consistent space between items */
+
     padding: 1.5rem;
-    background-color: var(--bg-secondary);
-    border-radius: var(--radius-md);
+    background-color: var(--bg-secondary); /* #1A202C */
+    border-radius: var(--radius-md);     /* 12px */
     margin-bottom: 2.5rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color); /* #4A5568 */
 }
 
-/* UPDATED: Added .custom-datepicker-input to the selectors below.
-   This ensures the button looks identical to the inputs/selects.
-*/
+/* Common styles for all filter controls to ensure they look the same */
 .filter-bar select,
-.filter-bar .react-datepicker-wrapper input,
-.custom-datepicker-input {
+.filter-bar .react-datepicker-wrapper input {
     /* Layout */
-    flex: 1;
-    min-width: 200px;
-    width: 100%; /* Ensures button fills container */
+    flex: 1; /* Allows each item to grow and fill available space */
+    min-width: 200px; /* Prevents items from becoming too small */
 
     /* Appearance */
     padding: 0.8rem 1rem;
     font-size: 1rem;
-    line-height: 1.5;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
+    line-height: 1.5; /* Ensures consistent height */
+    background-color: var(--bg-tertiary); /* #2D3748 */
+    color: var(--text-primary);           /* #FFFFFF */
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-sm);      /* 6px */
     transition: all 0.2s ease;
-
-    /* specific for button to look like text input */
-    text-align: left;
-    font-family: inherit;
-    cursor: pointer;
 }
 
 /* Custom dropdown arrow for <select> elements */
@@ -89,17 +81,14 @@
     background-position: right 0.7rem center;
     background-repeat: no-repeat;
     background-size: 1.25em;
-    padding-right: 2.5rem;
+    padding-right: 2.5rem; /* Space for the custom arrow */
 }
 
-/* UPDATED: Focus state for better accessibility
-   Added .custom-datepicker-input:focus
-*/
+/* Focus state for better accessibility */
 .filter-bar select:focus,
-.filter-bar .react-datepicker-wrapper input:focus,
-.custom-datepicker-input:focus {
+.filter-bar .react-datepicker-wrapper input:focus {
     outline: none;
-    border-color: var(--accent-primary);
+    border-color: var(--accent-primary); /* #fcc200 */
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
@@ -107,7 +96,7 @@
 .filter-bar .react-datepicker-wrapper,
 .filter-bar .react-datepicker__input-container {
     flex: 1;
-    display: flex;
+    display: flex; /* Ensures the input inside fills the wrapper */
     min-width: 200px;
 }
 

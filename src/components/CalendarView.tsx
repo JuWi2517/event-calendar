@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Event } from '../types/Event';
@@ -17,19 +17,6 @@ const monthNames = [
     'Leden','Únor','Březen','Duben','Květen','Červen',
     'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'
 ];
-
-const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
-    ({ value, onClick, placeholder }, ref) => (
-        <button
-            className="custom-datepicker-input"
-            onClick={onClick}
-            ref={ref}
-            type="button"
-        >
-            {value || placeholder}
-        </button>
-    )
-);
 
 const formatDateRange = (startStr: string, endStr: string | undefined): string => {
     if (!startStr) return 'Datum nespecifikováno';
@@ -159,8 +146,9 @@ export default function CalendarView() {
                         placeholderText="Filtrovat podle dne"
                         dateFormat="d. MMMM yyyy"
                         isClearable
+                        onFocus={(e) => e.target.blur()}
+                        onKeyDown={(e) => e.preventDefault()}
                         openToDate={openToMonth}
-                        customInput={<DatePickerCustomInput />}
                     />
                 </div>
 

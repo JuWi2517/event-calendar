@@ -313,9 +313,10 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     selectsRange
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
-                    // Use CustomInput to prevent mobile keyboard
+                    placeholderText="Vyberte datum"
                     customInput={<DatePickerCustomInput className="date-picker" />}
                     required
+                    isClearable
                 />
 
                 <label>Začátek: *</label>
@@ -333,6 +334,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     placeholderText="Vyberte čas"
                     customInput={<DatePickerCustomInput className="date-picker" />}
                     required
+                    isClearable
                 />
 
                 <label>Cena:</label>

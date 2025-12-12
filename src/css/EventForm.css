@@ -88,6 +88,7 @@
     padding: 12px 14px;
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    text-align: left;
 }
 
 .event-form-container input::placeholder,

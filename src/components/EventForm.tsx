@@ -27,7 +27,7 @@ const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
             className={className}
             onClick={onClick}
             ref={ref}
-            type="button" // Important: behaves like a button, not text input
+            type="button"
         >
             {value || placeholder}
         </button>
@@ -98,6 +98,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
     // VALIDATION STATE
     const [locationError, setLocationError] = useState(false);
+    // NEW: Validation states for Date and Time
+    const [dateError, setDateError] = useState(false);
+    const [timeError, setTimeError] = useState(false);
 
     const dropdownRef = useRef<HTMLUListElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,7 +118,9 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             price: '', location: '', facebookUrl: '', poster: null, lat: 0, lng: 0,
         });
         setSuggestions([]);
-        setLocationError(false); // Reset error
+        setLocationError(false);
+        setDateError(false); // Reset date error
+        setTimeError(false); // Reset time error
         if (fileInputRef.current) fileInputRef.current.value = '';
 
         setIsCompressing(false);
@@ -160,8 +165,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
         if (name === 'location') {
             justSelectedSuggestion.current = false;
-            setLocationError(false); // Clear error when typing
-            // Force reset coordinates to 0 so they must re-select
+            setLocationError(false);
             setForm(prev => ({ ...prev, location: value, lat: 0, lng: 0 }));
         } else {
             setForm(prev => ({ ...prev, [name]: value } as any));
@@ -171,6 +175,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const handleDateChange = (dates: [Date | null, Date | null]) => {
         const [start, end] = dates;
         setForm(prev => ({ ...prev, startDate: start, endDate: end }));
+        if (start) setDateError(false); // Clear error when selected
     };
 
     const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,13 +218,30 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // 1. Validation: Check Location Lat/Lng
-        if (form.lat === 0 || form.lng === 0) {
-            setLocationError(true);
-            return;
+        // --- 1. Validation Logic ---
+        let hasError = false;
+
+        // Date Validation
+        if (!form.startDate) {
+            setDateError(true);
+            hasError = true;
         }
 
-        // 2. Validation: Check URL validity (if present)
+        // Time Validation
+        if (!form.start) {
+            setTimeError(true);
+            hasError = true;
+        }
+
+        // Location Lat/Lng Validation
+        if (form.lat === 0 || form.lng === 0) {
+            setLocationError(true);
+            hasError = true;
+        }
+
+        if (hasError) return; // Stop submission if any required field is missing
+
+        // URL Validation
         if (form.facebookUrl && form.facebookUrl.trim() !== '') {
             try {
                 new URL(form.facebookUrl);
@@ -314,17 +336,27 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
                     placeholderText="Vyberte datum"
-                    customInput={<DatePickerCustomInput className="date-picker" />}
-                    required
+                    // Pass a red border class if error exists
+                    customInput={
+                        <DatePickerCustomInput
+                            className={`date-picker ${dateError ? 'input-error' : ''}`}
+                        />
+                    }
                     isClearable
                 />
+                {dateError && (
+                    <div className="validation-error">
+                        <span>Toto pole je povinné.</span>
+                    </div>
+                )}
 
                 <label>Začátek: *</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
-                    onChange={date =>
-                        setForm(prev => ({ ...prev, start: date ? date.toTimeString().slice(0, 5) : '' }))
-                    }
+                    onChange={date => {
+                        setForm(prev => ({ ...prev, start: date ? date.toTimeString().slice(0, 5) : '' }));
+                        if (date) setTimeError(false); // Clear error when selected
+                    }}
                     locale="cs"
                     showTimeSelect
                     showTimeSelectOnly
@@ -332,10 +364,19 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     timeCaption="Čas"
                     dateFormat="HH:mm"
                     placeholderText="Vyberte čas"
-                    customInput={<DatePickerCustomInput className="date-picker" />}
-                    required
+                    // Pass a red border class if error exists
+                    customInput={
+                        <DatePickerCustomInput
+                            className={`date-picker ${timeError ? 'input-error' : ''}`}
+                        />
+                    }
                     isClearable
                 />
+                {timeError && (
+                    <div className="validation-error">
+                        <span>Toto pole je povinné.</span>
+                    </div>
+                )}
 
                 <label>Cena:</label>
                 <input type="number" name="price" value={form.price} onChange={handleChange} />
@@ -350,7 +391,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     className={locationError ? 'input-error' : ''}
                 />
 
-                {/* Validation Error Message */}
+                {/* Location Error Message */}
                 {locationError && (
                     <div className="validation-error">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

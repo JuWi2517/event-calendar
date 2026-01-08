@@ -27,7 +27,7 @@ export default function Navbar() {
     return (
         <nav style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '16px 24px', background: 'var(--card)', borderBottom: '1px solid var(--line)'
+            padding: '16px 24px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)',backgroundColor: 'rgba(0, 0, 0, 0.2)',
         }}>
             <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
                 <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>🗓️ Kalendář</Link>

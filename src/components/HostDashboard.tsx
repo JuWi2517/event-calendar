@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef } from 'react';
 import {
     collection,
     deleteDoc,
@@ -15,7 +15,7 @@ import {
     deleteObject,
 } from 'firebase/storage';
 import { db, storage } from '../firebase';
-import { getAuth, onAuthStateChanged, type User } from 'firebase/auth'; // Auth imports
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import type { Event } from '../types/Event';
 import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
@@ -23,11 +23,43 @@ import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
-
-// Import the Mapy Logo (Make sure the path is correct)
 import MapyLogo from "../assets/Photos/imageedit_1_2894183964.webp";
 
 registerLocale('cs', cs);
+
+// --- TLAČÍTKO VZHLEDOVĚ SHODNÉ S INPUTEM ---
+// eslint-disable-next-line react/display-name
+const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
+    ({ value, onClick, placeholder, className }, ref) => (
+        <button
+            className={className}
+            onClick={onClick}
+            ref={ref}
+            type="button"
+            style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                background: 'var(--card2)',
+                color: value ? 'var(--text)' : 'var(--muted)',
+                border: '1px solid var(--line)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                fontSize: '1rem',
+                textAlign: 'left',
+                cursor: 'pointer',
+                outline: 'none',
+                fontFamily: 'inherit',
+                fontWeight: 400,
+                display: 'flex',
+                alignItems: 'center',
+                height: 'auto',
+                lineHeight: 'normal'
+            }}
+        >
+            {value || placeholder}
+        </button>
+    )
+);
 
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
@@ -77,15 +109,13 @@ async function normalizeFacebookUrl(rawUrl: string): Promise<string> {
             const data = await response.json();
             if (data?.resolved) return String(data.resolved);
             return trimmedUrl;
-        } catch {
-            return trimmedUrl;
-        }
+        } catch { return trimmedUrl; }
     }
     return trimmedUrl;
 }
 
 export default function HostDashboard() {
-    const [user, setUser] = useState<User | null>(null); // NEW: Auth State
+    const [user, setUser] = useState<User | null>(null);
     const [pending, setPending] = useState<WithId<Event>[]>([]);
     const [approved, setApproved] = useState<WithId<Event>[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
@@ -101,18 +131,15 @@ export default function HostDashboard() {
     const suggRef = useRef<HTMLUListElement>(null);
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
 
-    // 1. Authenticate & Fetch Data
     useEffect(() => {
         const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                // Fetch SUBMISSIONS (Pending) for this host
                 const subQ = query(collection(db, 'submissions'), where('hostId', '==', currentUser.uid));
                 const subSnap = await getDocs(subQ);
                 setPending(subSnap.docs.map(d => ({ id: d.id, ...(d.data() as Event) })));
 
-                // Fetch EVENTS (Approved) for this host
                 const evtQ = query(collection(db, 'events'), where('hostId', '==', currentUser.uid));
                 const evtSnap = await getDocs(evtQ);
                 setApproved(evtSnap.docs.map(d => ({ id: d.id, ...(d.data() as Event) })));
@@ -121,13 +148,11 @@ export default function HostDashboard() {
         return () => unsubscribe();
     }, []);
 
-    // 2. Map Suggestion Logic (Matches EventForm)
     useEffect(() => {
         const ctl = new AbortController();
         (async () => {
             if (!locQuery || locQuery.length < 3) {
-                setLocSuggestions([]);
-                return;
+                setLocSuggestions([]); return;
             }
             try {
                 const resp = await fetch(
@@ -135,14 +160,9 @@ export default function HostDashboard() {
                     { signal: ctl.signal }
                 );
                 const data = await resp.json();
-                if (Array.isArray(data?.items)) {
-                    setLocSuggestions(data.items);
-                } else {
-                    setLocSuggestions([]);
-                }
-            } catch {
-                setLocSuggestions([]);
-            }
+                if (Array.isArray(data?.items)) setLocSuggestions(data.items);
+                else setLocSuggestions([]);
+            } catch { setLocSuggestions([]); }
         })();
         return () => ctl.abort();
     }, [locQuery, MAPY_API_KEY]);
@@ -152,7 +172,6 @@ export default function HostDashboard() {
         setEditedCollection(from);
         setNewImage(null);
         setModalOpen(true);
-        // Reset location search
         setLocQuery('');
         setLocSuggestions([]);
         setLocationError(false);
@@ -168,8 +187,6 @@ export default function HostDashboard() {
         setLocationError(false);
     };
 
-    // Removed approve/unapprove functions as Hosts cannot do this.
-
     const deletePosterIfAny = async (obj: Partial<Event>) => {
         let pathToDelete = (obj as any)?.posterPath as string | undefined;
         if (!pathToDelete && obj.posterUrl) {
@@ -179,15 +196,12 @@ export default function HostDashboard() {
                 if (encoded) pathToDelete = decodeURIComponent(encoded);
             } catch {}
         }
-
         if (pathToDelete) {
             try {
                 await deleteObject(ref(storage, pathToDelete));
                 const resizedPath = getResizedImagePath(pathToDelete);
                 await deleteObject(ref(storage, resizedPath));
-            } catch (error) {
-                console.warn("Could not delete some images:", error);
-            }
+            } catch (error) { console.warn("Could not delete some images:", error); }
         }
     };
 
@@ -199,13 +213,9 @@ export default function HostDashboard() {
         try {
             await deleteDoc(doc(db, from, id));
             try { await deletePosterIfAny(itm); } catch (e) { console.warn('Plakát se nepodařilo smazat:', e); }
-            if (from === 'submissions') {
-                setPending(p => p.filter(x => x.id !== id));
-            } else {
-                setApproved(a => a.filter(x => x.id !== id));
-            }
+            if (from === 'submissions') setPending(p => p.filter(x => x.id !== id));
+            else setApproved(a => a.filter(x => x.id !== id));
         } catch (e: any) {
-            console.error('Mazání dokumentu selhalo:', e);
             alert('Mazání selhalo: ' + (e?.message ?? e));
         }
     };
@@ -221,27 +231,21 @@ export default function HostDashboard() {
             setLocationError(true);
             return;
         }
-        if (!copy.start || String(copy.start).trim() === '') missing.push('Čas');
-        if (!copy.category || String(copy.category).trim() === '') missing.push('Kategorie');
-        if (!copy.startDate || String(copy.startDate).trim() === '') missing.push('Datum');
+        if (!copy.startDate) missing.push('Datum');
 
         if (missing.length > 0) {
             alert('Není vyplněno povinné pole: ' + missing.join(', '));
             return;
         }
-        if (copy.facebookUrl && copy.facebookUrl.trim() !== '') {
-            try { new URL(copy.facebookUrl); } catch {
-                alert('Zadaná Facebook URL není platná.'); return;
-            }
+        if (copy.facebookUrl) {
+            copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl);
         }
-        copy.facebookUrl = await normalizeFacebookUrl(copy.facebookUrl || '');
 
         if (newImage) {
             await deletePosterIfAny(copy);
             const newPath = `posters/${Date.now()}_${newImage.name}`;
             const newRef = ref(storage, newPath);
             await uploadBytes(newRef, newImage);
-
             copy.posterUrl = await getDownloadURL(newRef);
             (copy as any).posterPath = newPath;
             (copy as any).resizedPosterPath = getResizedImagePath(newPath);
@@ -265,10 +269,8 @@ export default function HostDashboard() {
     const handleLocationSelect = (item: any) => {
         const rawName = item.name || item.label || '';
         const cleanName = rawName.split('(')[0].trim();
-
         const lat = item.position?.lat ?? 0;
         const lng = item.position?.lon ?? 0;
-
         setEditedEvent(prev => {
             if (!prev) return null;
             return { ...prev, location: cleanName, lat: lat, lng: lng };
@@ -287,71 +289,28 @@ export default function HostDashboard() {
         } as WithId<Event>) : prev));
     };
 
-    // Render Card (Removed Approve Buttons)
     const renderCard = (item: WithId<Event>, type: 'submissions' | 'events') => (
-        <article
-            key={item.id}
-            className="card"
-            onClick={() => openEdit(item, type)}
-            title="Upravit"
-        >
+        <article key={item.id} className="card" onClick={() => openEdit(item, type)}>
             {item.posterUrl && <img src={item.posterUrl} alt="" className="card-poster" />}
             <div className="card-body">
                 <h4 className="card-title">{item.title || 'Bez názvu'}</h4>
-
                 <div className="card-details">
-                    <div className="card-row">
-                        <IconCalendar />
-                        <span>{formatDisplayDate(item.startDate)}</span>
-                    </div>
-                    {item.start && (
-                        <div className="card-row">
-                            <IconClock />
-                            <span>{item.start}</span>
-                        </div>
-                    )}
-                    {item.location && (
-                        <div className="card-row">
-                            <IconMapPin />
-                            <span>{item.location}</span>
-                        </div>
-                    )}
-                    {item.price && (
-                        <div className="card-row">
-                            <IconPrice />
-                            <span>{item.price} Kč</span>
-                        </div>
-                    )}
-                    {item.category && (
-                        <div className="card-row">
-                            <IconTag />
-                            <span>{item.category}</span>
-                        </div>
-                    )}
+                    <div className="card-row"><IconCalendar /><span>{formatDisplayDate(item.startDate)}</span></div>
+                    {item.start && <div className="card-row"><IconClock /><span>{item.start}</span></div>}
+                    {item.location && <div className="card-row"><IconMapPin /><span>{item.location}</span></div>}
+                    {item.price && <div className="card-row"><IconPrice /><span>{item.price} Kč</span></div>}
+                    {item.category && <div className="card-row"><IconTag /><span>{item.category}</span></div>}
                 </div>
-
                 <div className="actions">
-                    {/* Only Edit and Delete for Hosts */}
-                    <button
-                        className="btn neutral"
-                        onClick={e => { e.stopPropagation(); openEdit(item, type); }}
-                    >
-                        Upravit
-                    </button>
-                    <button
-                        className="btn delete"
-                        onClick={e => { e.stopPropagation(); removeCard(item.id, type); }}
-                    >
-                        Smazat
-                    </button>
+                    {/* Hosts only edit/delete */}
+                    <button className="btn neutral" onClick={e => { e.stopPropagation(); openEdit(item, type); }}>Upravit</button>
+                    <button className="btn delete" onClick={e => { e.stopPropagation(); removeCard(item.id, type); }}>Smazat</button>
                 </div>
             </div>
         </article>
     );
 
-    if (!user) {
-        return <div className="admin-page">Načítám nebo nejste přihlášen...</div>;
-    }
+    if (!user) return <div className="admin-page">Načítám...</div>;
 
     return (
         <div className="admin-page">
@@ -377,7 +336,6 @@ export default function HostDashboard() {
                 </div>
             </section>
 
-            {/* MODAL */}
             {modalOpen && editedEvent && (
                 <div className="modal-bg" onClick={closeModal}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
@@ -385,55 +343,38 @@ export default function HostDashboard() {
                             <h3>Upravit událost</h3>
                             <button className="icon-close" onClick={closeModal}>×</button>
                         </div>
-
                         <div className="modal-grid">
                             <div className="field">
                                 <label>Název</label>
-                                <input
-                                    value={editedEvent.title || ''}
-                                    onChange={e => setField('title', e.target.value)}
-                                    required
-                                />
+                                <input value={editedEvent.title || ''} onChange={e => setField('title', e.target.value)} required />
                             </div>
-
                             <div className="field">
-                                <label>Datum (nebo rozmezí)</label>
+                                <label>Datum</label>
                                 <ReactDatePicker
                                     selected={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
                                     startDate={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
                                     endDate={editedEvent.endDate ? new Date(editedEvent.endDate) : null}
                                     onChange={handleModalDateChange}
-                                    selectsRange
-                                    dateFormat="dd.MM.yyyy"
-                                    locale="cs"
-                                    className="date-picker"
-                                    onFocus={(e) => e.target.blur()}
-                                    onKeyDown={(e) => e.preventDefault()}
+                                    selectsRange dateFormat="dd.MM.yyyy" locale="cs"
+                                    customInput={<DatePickerCustomInput placeholder="Vyberte datum" />}
                                     required
+                                    isClearable
                                 />
                             </div>
-
                             <div className="field">
                                 <label>Čas</label>
                                 <ReactDatePicker
                                     selected={editedEvent.start ? new Date(`1970-01-01T${editedEvent.start}`) : null}
                                     onChange={d => setField('start', d ? d.toTimeString().slice(0, 5) : '')}
-                                    showTimeSelect showTimeSelectOnly timeIntervals={5}
-                                    timeCaption="Čas" dateFormat="HH:mm" locale="cs"
-                                    placeholderText="Vyberte čas" className="date-picker"
-                                    onFocus={(e) => e.target.blur()}
-                                    onKeyDown={(e) => e.preventDefault()}
+                                    showTimeSelect showTimeSelectOnly timeIntervals={5} timeCaption="Čas" dateFormat="HH:mm" locale="cs"
+                                    customInput={<DatePickerCustomInput placeholder="Vyberte čas" />}
                                     required
+                                    isClearable
                                 />
                             </div>
-
                             <div className="field">
                                 <label>Kategorie</label>
-                                <select
-                                    value={editedEvent.category || ''}
-                                    onChange={e => setField('category', e.target.value)}
-                                    required
-                                >
+                                <select value={editedEvent.category || ''} onChange={e => setField('category', e.target.value)}>
                                     <option value="">Všechny kategorie</option>
                                     <option value="koncert">Koncerty</option>
                                     <option value="sport">Sport</option>
@@ -445,17 +386,10 @@ export default function HostDashboard() {
                                     <option value="slavnost">Slavnosti</option>
                                 </select>
                             </div>
-
                             <div className="field">
                                 <label>Cena</label>
-                                <input
-                                    value={editedEvent.price || ''}
-                                    onChange={e => setField('price', e.target.value)}
-                                    type="number"
-                                />
+                                <input value={editedEvent.price || ''} onChange={e => setField('price', e.target.value)} />
                             </div>
-
-                            {/* --- UPDATED LOCATION FIELD (Matches EventForm) --- */}
                             <div className="field">
                                 <label>Místo</label>
                                 <input
@@ -466,24 +400,17 @@ export default function HostDashboard() {
                                         setLocQuery(val);
                                         setLocationError(false);
                                     }}
-                                    autoComplete="off"
-                                    required
                                     className={locationError ? 'input-error' : ''}
                                 />
-                                {locationError && (
-                                    <div className="validation-error">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                        <span>Prosím vyberte konkrétní místo z nabídky.</span>
-                                    </div>
-                                )}
+                                {locationError && <div className="validation-error">Vyberte konkrétní místo z nabídky.</div>}
                                 {locSuggestions.length > 0 && (
                                     <ul className="suggestions" ref={suggRef}>
                                         {locSuggestions.map((item, i) => (
                                             <li key={i} onClick={() => handleLocationSelect(item)}>
                                                 {item.name.split('(')[0].trim()}
+                                                {item.label && <small style={{marginLeft:8, color:'#999'}}>({item.label})</small>}
                                             </li>
                                         ))}
-                                        {/* --- ADDED MAPY LOGO FOOTER HERE --- */}
                                         <li style={{ padding: '8px 12px', textAlign: 'right', cursor: 'default', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                                             <a href="https://mapy.com/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }} onClick={(e) => e.stopPropagation()}>
                                                 <span style={{ fontSize: '0.8em', color: '#555' }}>Powered by</span>
@@ -493,35 +420,18 @@ export default function HostDashboard() {
                                     </ul>
                                 )}
                             </div>
-
                             <div className="field">
-                                <label>Odkaz na událost:</label>
-                                <input
-                                    type="url"
-                                    value={editedEvent.facebookUrl || ''}
-                                    onChange={e => setField('facebookUrl', e.target.value)}
-                                />
+                                <label>Facebook URL</label>
+                                <input type="url" value={editedEvent.facebookUrl || ''} onChange={e => setField('facebookUrl', e.target.value)} />
                             </div>
-
                             <div className="field">
                                 <label>Plakát</label>
                                 {editedEvent.posterUrl && (
-                                    <img
-                                        src={editedEvent.posterUrl}
-                                        className="poster-preview"
-                                        alt="Poster"
-                                        onClick={() => setFullScreenImageUrl(editedEvent.posterUrl || null)}
-                                        title="Zobrazit celý plakát"
-                                    />
+                                    <img src={editedEvent.posterUrl} className="poster-preview" alt="Poster" onClick={() => setFullScreenImageUrl(editedEvent.posterUrl || null)} />
                                 )}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={e => setNewImage(e.target.files?.[0] ?? null)}
-                                />
+                                <input type="file" accept="image/*" onChange={e => setNewImage(e.target.files?.[0] ?? null)} />
                             </div>
                         </div>
-
                         <div className="modal-actions">
                             <button className="btn save" onClick={saveChanges}>Uložit změny</button>
                             <button className="btn ghost" onClick={closeModal}>Zavřít</button>

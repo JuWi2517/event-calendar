@@ -158,14 +158,33 @@ export default function Login() {
                     </button>
                 </form>
 
-                <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--muted)' }}>Nemáte účet? </span>
+                <div style={{
+                    marginTop: '24px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.85rem' // Menší písmo pro oba odkazy
+                }}>
+                    {/* Odkaz na registraci (VLEVO) */}
+                    <div>
+                        <span style={{ color: 'var(--muted)' }}>Nemáte účet? </span>
+                        <Link
+                            to="/registrace"
+                            state={{ claimEventId: location.state?.claimEventId }}
+                            style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
+                        >
+                            Zaregistrovat se
+                        </Link>
+                    </div>
+
+                    {/* Odkaz na reset hesla (VPRAVO) */}
                     <Link
-                        to="/registrace"
-                        state={{ claimEventId: location.state?.claimEventId }}
-                        style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
+                        to="/reset-hesla"
+                        style={{ color: 'var(--muted)', textDecoration: 'none' }}
+                        onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
                     >
-                        Zaregistrovat se
+                        Zapomněli jste heslo?
                     </Link>
                 </div>
             </div>

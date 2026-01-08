@@ -1,13 +1,13 @@
 :root{
     --bg:#0f141b;
     --card:#161c24;
-    --card2:#1b2230;
+    --card2:#1b2230; /* Stejná barva jako v EventForm */
     --line:#2a3242;
     --text:#e7edf7;
     --muted:#9aa4b2;
     --accent:#d1b15a;
     --ok:#20c997;
-    --warn:#f7c600; /* Yellow for icons */
+    --warn:#f7c600;
     --danger:#ff4d4f;
     --radius:14px;
 }
@@ -45,7 +45,7 @@
 /* --- GRID & CARDS --- */
 .cards-grid{
     display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Slightly wider for better fit */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap:16px;
 }
 
@@ -61,13 +61,13 @@
 }
 .card:hover{
     transform:translateY(-2px);
-    border-color:rgba(247, 198, 0, 0.3); /* Subtle yellow glow on hover */
+    border-color:rgba(247, 198, 0, 0.3);
     box-shadow:0 12px 28px rgba(0,0,0,.45);
 }
 
 .card-poster{
     width:100%;
-    aspect-ratio: 4/3; /* Consistent height ratio */
+    aspect-ratio: 4/3;
     object-fit:cover;
     display:block;
     background:#0b0f15;
@@ -89,7 +89,6 @@
     color: #fff;
 }
 
-/* --- NEW: Vertical Details List with Icons --- */
 .card-details {
     display: flex;
     flex-direction: column;
@@ -99,7 +98,7 @@
 
 .card-row {
     display: flex;
-    align-items: center; /* Vertically align icon with text */
+    align-items: center;
     gap: 10px;
     color: var(--muted);
     font-size: 0.9rem;
@@ -107,17 +106,17 @@
 }
 
 .card-icon {
-    color: var(--warn); /* The yellow color */
+    color: var(--warn);
     width: 16px;
     height: 16px;
-    flex-shrink: 0; /* Prevent icon from squishing */
+    flex-shrink: 0;
 }
 
 /* --- ACTIONS (Buttons) --- */
 .actions{
     display:flex;
     gap:8px;
-    margin-top: auto; /* Push buttons to bottom */
+    margin-top: auto;
 }
 .btn{
     flex:1 1 auto;
@@ -131,7 +130,7 @@
 .btn:hover{ filter:brightness(1.1); }
 .btn:active{ transform:translateY(1px); }
 
-/* --- MODAL STYLES (Kept as is) --- */
+/* --- MODAL STYLES --- */
 .modal-bg{
     position:fixed; inset:0;
     background:rgba(0,0,0,.7);
@@ -163,15 +162,50 @@
 @media (max-width:700px){
     .modal-grid{ grid-template-columns:1fr; }
 }
+
+/* --- FIELDS & INPUTS (Sjednoceno s EventForm.css) --- */
 .field label{
     display:block; margin:0 0 6px; color:var(--muted); font-size:.85rem;
 }
-.field input, .field select{
+
+/* Toto aplikuje stejný vzhled na inputy, selecty a date-picker */
+.field input,
+.field select,
+.field .date-picker {
     width:100%; box-sizing:border-box;
-    background:var(--card2); color:var(--text);
-    border:1px solid var(--line); border-radius:10px;
-    padding:12px;
+    background:var(--card2);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
     font-size: 1rem;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.field input::placeholder,
+.field .date-picker::placeholder {
+    color: #8e96a4;
+}
+
+.field input:focus,
+.field select:focus,
+.field .date-picker:focus {
+    border-color: rgba(32,12,207,.65);
+    box-shadow: 0 0 0 4px rgba(32,12,207,.18);
+}
+
+/* --- DATEPICKER FIXES --- */
+/* Důležité: Zajistí, že datepicker zabere 100% šířky parent elementu */
+.field .react-datepicker-wrapper {
+    width: 100%;
+    display: block;
+}
+.field .react-datepicker__input-container {
+    display: block;
+}
+.field .react-datepicker__input-container input {
+    width: 100%; /* Input uvnitř wrapperu musí být taky 100% */
 }
 
 /* Error state styles */

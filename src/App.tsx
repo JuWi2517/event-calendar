@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { auth } from "./firebase";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { checkIsAdmin } from './utils/adminAuth';
+import ResetPassword from "./components/ResetPassword.tsx";
 import "./css/Global.css";
 
 // Lazy imports...
@@ -82,6 +83,8 @@ export default function App() {
                             </AdminRoute>
                         }
                     />
+
+                    <Route path="reset-hesla" element={<ResetPassword />} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

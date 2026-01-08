@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef } from 'react';
 import {
     addDoc,
     collection,
@@ -19,11 +19,46 @@ import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
-import '../css/AdminDashboard.css'; // Ensures the Red/Green buttons work
+import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
-import MapyLogo from "../assets/Photos/imageedit_1_2894183964.webp"; // The Logo
+import MapyLogo from "../assets/Photos/imageedit_1_2894183964.webp";
 
 registerLocale('cs', cs);
+
+// --- TOTO JE TO ŘEŠENÍ: Tlačítko, které vypadá PŘESNĚ jako input ---
+// eslint-disable-next-line react/display-name
+const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
+    ({ value, onClick, placeholder, className }, ref) => (
+        <button
+            className={className}
+            onClick={onClick}
+            ref={ref}
+            type="button"
+            style={{
+                // Kopie stylů z EventForm.css (.event-form-container input)
+                width: '100%',
+                boxSizing: 'border-box',
+                background: 'var(--card2)', // #1b2230
+                color: value ? 'var(--text)' : 'var(--muted)', // Pokud není hodnota, použije šedou pro placeholder
+                border: '1px solid var(--line)', // #2a3242
+                borderRadius: '10px',
+                padding: '12px 14px', // Přesný padding z EventForm
+                fontSize: '1rem', // Přesná velikost
+                textAlign: 'left', // Zarovnání doleva jako input
+                cursor: 'pointer',
+                outline: 'none',
+                fontFamily: 'inherit', // Aby písmo nebylo jiné
+                fontWeight: 400, // Tlačítka jsou defaultně tučná, inputy ne
+                display: 'flex',
+                alignItems: 'center',
+                height: 'auto',
+                lineHeight: 'normal'
+            }}
+        >
+            {value || placeholder}
+        </button>
+    )
+);
 
 const toLocalDateString = (date: Date | null): string => {
     if (!date) return '';
@@ -50,7 +85,7 @@ function getResizedImagePath(originalPath: string): string {
     return `${pathWithoutExtension}${suffix}`;
 }
 
-// --- ICONS (Restored) ---
+// --- ICONS ---
 const IconCalendar = () => (<svg className="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>);
 const IconClock = () => (<svg className="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>);
 const IconMapPin = () => (<svg className="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>);
@@ -87,7 +122,6 @@ export default function AdminDashboard() {
     const [newImage, setNewImage] = useState<File | null>(null);
     const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
 
-    // Location state
     const [locQuery, setLocQuery] = useState('');
     const [locSuggestions, setLocSuggestions] = useState<any[]>([]);
     const [locationError, setLocationError] = useState(false);
@@ -250,11 +284,9 @@ export default function AdminDashboard() {
         setEditedEvent(prev => (prev ? ({ ...prev, [key]: val } as WithId<Event>) : prev));
     };
 
-    // --- FIX: Clean Location Name & Mapy Logo ---
     const handleLocationSelect = (item: any) => {
         const rawName = item.name || item.label || '';
         const cleanName = rawName.split('(')[0].trim();
-
         const lat = item.position?.lat ?? 0;
         const lng = item.position?.lon ?? 0;
         setEditedEvent(prev => {
@@ -337,18 +369,16 @@ export default function AdminDashboard() {
                             </div>
                             <div className="field">
                                 <label>Datum</label>
+                                {/* --- POUŽITÍ CUSTOM INPUTU (TLAČÍTKA) --- */}
                                 <ReactDatePicker
                                     selected={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
                                     startDate={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
                                     endDate={editedEvent.endDate ? new Date(editedEvent.endDate) : null}
                                     onChange={handleModalDateChange}
-                                    selectsRange
-                                    dateFormat="dd.MM.yyyy"
-                                    locale="cs"
-                                    className="date-picker"
-                                    onFocus={(e) => e.target.blur()}
-                                    onKeyDown={(e) => e.preventDefault()}
+                                    selectsRange dateFormat="dd.MM.yyyy" locale="cs"
+                                    customInput={<DatePickerCustomInput placeholder="Vyberte datum" />}
                                     required
+                                    isClearable
                                 />
                             </div>
                             <div className="field">
@@ -356,12 +386,10 @@ export default function AdminDashboard() {
                                 <ReactDatePicker
                                     selected={editedEvent.start ? new Date(`1970-01-01T${editedEvent.start}`) : null}
                                     onChange={d => setField('start', d ? d.toTimeString().slice(0, 5) : '')}
-                                    showTimeSelect showTimeSelectOnly timeIntervals={5}
-                                    timeCaption="Čas" dateFormat="HH:mm" locale="cs"
-                                    placeholderText="Vyberte čas" className="date-picker"
-                                    onFocus={(e) => e.target.blur()}
-                                    onKeyDown={(e) => e.preventDefault()}
+                                    showTimeSelect showTimeSelectOnly timeIntervals={5} timeCaption="Čas" dateFormat="HH:mm" locale="cs"
+                                    customInput={<DatePickerCustomInput placeholder="Vyberte čas" />}
                                     required
+                                    isClearable
                                 />
                             </div>
                             <div className="field">
@@ -380,7 +408,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="field">
                                 <label>Cena</label>
-                                <input value={editedEvent.price || ''} onChange={e => setField('price', e.target.value)} type="number" />
+                                <input value={editedEvent.price || ''} onChange={e => setField('price', e.target.value)} />
                             </div>
                             <div className="field">
                                 <label>Místo</label>
@@ -413,7 +441,7 @@ export default function AdminDashboard() {
                                 )}
                             </div>
                             <div className="field">
-                                <label>Odkaz na událost</label>
+                                <label>Facebook URL</label>
                                 <input type="url" value={editedEvent.facebookUrl || ''} onChange={e => setField('facebookUrl', e.target.value)} />
                             </div>
                             <div className="field">

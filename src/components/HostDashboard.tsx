@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, forwardRef } from 'react';
 import {
+    addDoc, // Added missing import
     collection,
     deleteDoc,
     doc,
@@ -220,6 +221,7 @@ export default function HostDashboard() {
         }
     };
 
+    // --- FIX: Logic to move edited approved events back to submissions ---
     const saveChanges = async () => {
         if (!editedEvent || !editedCollection) return;
         const copy: WithId<Event> = { ...editedEvent };
@@ -252,13 +254,29 @@ export default function HostDashboard() {
         }
 
         const { id, ...payload } = copy;
-        await updateDoc(doc(db, editedCollection, id), payload);
 
-        if (editedCollection === 'submissions') {
-            setPending(p => p.map(x => (x.id === id ? copy : x)));
-        } else {
-            setApproved(a => a.map(x => (x.id === id ? copy : x)));
+        // If editing a PUBLIC event -> Delete from events, Add to submissions (pending)
+        if (editedCollection === 'events') {
+            const newPayload = { ...payload, status: 'pending' };
+
+            // 1. Create new in submissions
+            const docRef = await addDoc(collection(db, 'submissions'), newPayload);
+
+            // 2. Delete original from events
+            await deleteDoc(doc(db, 'events', id));
+
+            // 3. Update UI
+            setApproved(prev => prev.filter(x => x.id !== id));
+            setPending(prev => [{ ...newPayload, id: docRef.id } as WithId<Event>, ...prev]);
+
+            alert('Změna uložena. Událost byla přesunuta zpět ke schválení.');
         }
+        // If editing a PENDING submission -> Just update it
+        else {
+            await updateDoc(doc(db, 'submissions', id), payload);
+            setPending(prev => prev.map(x => (x.id === id ? copy : x)));
+        }
+
         closeModal();
     };
 
@@ -350,6 +368,7 @@ export default function HostDashboard() {
                             </div>
                             <div className="field">
                                 <label>Datum</label>
+                                {/* --- UPDATED DATE PICKER --- */}
                                 <ReactDatePicker
                                     selected={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
                                     startDate={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
@@ -363,6 +382,7 @@ export default function HostDashboard() {
                             </div>
                             <div className="field">
                                 <label>Čas</label>
+                                {/* --- UPDATED TIME PICKER --- */}
                                 <ReactDatePicker
                                     selected={editedEvent.start ? new Date(`1970-01-01T${editedEvent.start}`) : null}
                                     onChange={d => setField('start', d ? d.toTimeString().slice(0, 5) : '')}

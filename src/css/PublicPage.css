@@ -1,47 +1,38 @@
 /* ==========================================================================
-   1. Foundation & Global Styles
+   Public Page Styles
    ========================================================================== */
 
+/* We removed the 'html, body' block from here because it was breaking the Admin page.
+   It is now handled in Global.css.
+*/
 
+.public-page {
+    /* Changed from fixed height to min-height */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 
-/* Universal helpers */
-img, video {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
+    /* Removed overflow-y: auto to kill the double scrollbar */
+    overflow: visible;
 
-/* 1. Reset and Foundation for Real Mobile Devices */
-html, body {
-    padding: 0;
-    margin: 0;
-    height: 100%;
-    background-color: #0D1117; /* Ensures no white flashes */
-}
-
-/* 2. Main Page Container using the correct viewport unit */
-.public-page.bg {
-    /* LOCK the height to the dynamic screen size */
-    height: 100dvh;
-
-    /* Prevent the whole container from ever growing taller than the screen */
-    overflow-y: auto;
-
-    /* Keep the flexbox layout for its children */
-    display: block;
-
-
-    /* Your standard styles */
     background-color: #0D1117;
     color: var(--text, #e6eef6);
 }
 
-/* 3. The flex-grow fix we discovered earlier */
+.public-page.bg {
+    /* Inherits natural flow */
+    height: auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* The content container */
 .page-content {
     width: min(100% - 2rem, 1200px);
     margin-inline: auto;
     padding-block: 18px 0;
-    flex: 1;
+    flex: 1; /* This pushes the footer to the bottom */
 }
 
 /* Spacing for sections within the page */
@@ -50,7 +41,7 @@ html, body {
 }
 
 /* ==========================================================================
-   4. Form & Decorative Elements
+   Form & Decorative Elements
    ========================================================================== */
 
 /* Heading with decorative lines */
@@ -73,9 +64,6 @@ html, body {
     background: var(--accent-primary, #fcc200);
 }
 
-
-
-
 .form-shell {
     max-width: 900px;
     width: 100%;
@@ -84,6 +72,7 @@ html, body {
     margin: 32px auto 0;
 }
 
+/* Footer Styles */
 .footer {
     padding: 2rem 1rem;
     margin-top: auto;

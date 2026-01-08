@@ -10,6 +10,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import '../css/EventForm.css';
 import imageCompression from 'browser-image-compression';
 import MapyLogo from "../assets/Photos/imageedit_1_2894183964.webp"
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
 
 interface Suggestion {
     name: string;
@@ -19,7 +21,6 @@ interface Suggestion {
 
 registerLocale('cs', cs);
 
-// --- 1. Custom Input to prevent mobile keyboard ---
 // eslint-disable-next-line react/display-name
 const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
     ({ value, onClick, placeholder, className }, ref) => (
@@ -66,39 +67,29 @@ async function normalizeFacebookUrl(rawUrl: string): Promise<string> {
 }
 
 function getResizedImagePath(originalPath: string): string {
-    if (!originalPath) {
-        return '';
-    }
-
+    if (!originalPath) return '';
     const suffix = '_750x1080.webp';
     const lastDotIndex = originalPath.lastIndexOf('.');
-    if (lastDotIndex === -1) {
-        return `${originalPath}${suffix}`;
-    }
+    if (lastDotIndex === -1) return `${originalPath}${suffix}`;
     const pathWithoutExtension = originalPath.substring(0, lastDotIndex);
     return `${pathWithoutExtension}${suffix}`;
 }
 
 export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const [form, setForm] = useState({
-        title: '',
-        category: '',
-        startDate: null as Date | null,
-        endDate: null as Date | null,
-        start: '',
-        price: '',
-        location: '',
-        facebookUrl: '',
-        poster: null as File | null,
-        lat: 0,
-        lng: 0,
+        title: '', category: '', startDate: null as Date | null, endDate: null as Date | null,
+        start: '', price: '', location: '', facebookUrl: '', poster: null as File | null, lat: 0, lng: 0,
     });
+
+    // --- AUTH STATE ---
+    const [user, setUser] = useState<User | null>(null);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [createdEventId, setCreatedEventId] = useState<string | null>(null);
+
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
-    // VALIDATION STATE
     const [locationError, setLocationError] = useState(false);
-    // NEW: Validation states for Date and Time
     const [dateError, setDateError] = useState(false);
     const [timeError, setTimeError] = useState(false);
 
@@ -111,6 +102,15 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const justSelectedSuggestion = useRef(false);
 
     const MAPY_API_KEY = import.meta.env.VITE_MAPY_API_KEY;
+    const auth = getAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+        });
+        return () => unsubscribe();
+    }, [auth]);
 
     const resetForm = () => {
         setForm({
@@ -119,12 +119,13 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
         });
         setSuggestions([]);
         setLocationError(false);
-        setDateError(false); // Reset date error
-        setTimeError(false); // Reset time error
+        setDateError(false);
+        setTimeError(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
-
         setIsCompressing(false);
         setCompressionError('');
+        setCreatedEventId(null);
+        setShowAuthModal(false);
     };
 
     useEffect(() => {
@@ -132,7 +133,6 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             justSelectedSuggestion.current = false;
             return;
         }
-
         const controller = new AbortController();
         if (form.location.length < 3) {
             setSuggestions([]);
@@ -162,7 +162,6 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-
         if (name === 'location') {
             justSelectedSuggestion.current = false;
             setLocationError(false);
@@ -175,12 +174,11 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const handleDateChange = (dates: [Date | null, Date | null]) => {
         const [start, end] = dates;
         setForm(prev => ({ ...prev, startDate: start, endDate: end }));
-        if (start) setDateError(false); // Clear error when selected
+        if (start) setDateError(false);
     };
 
     const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-
         setCompressionError('');
         setIsCompressing(true);
         setForm(prev => ({ ...prev, poster: null }));
@@ -189,14 +187,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             setIsCompressing(false);
             return;
         }
-
-        const options = {
-            maxSizeMB: 1,
-            maxWidthOrHeight: 1920,
-            useWebP: true,
-            initialQuality: 0.9,
-        };
-
+        const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebP: true, initialQuality: 0.9 };
         try {
             const compressedFile = await imageCompression(file, options);
             setForm(prev => ({ ...prev, poster: compressedFile }));
@@ -206,7 +197,6 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
             setIsCompressing(false);
         }
     };
-
 
     const handleSelect = (s: Suggestion) => {
         justSelectedSuggestion.current = true;
@@ -218,49 +208,25 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // --- 1. Validation Logic ---
+        // Validation
         let hasError = false;
+        if (!form.startDate) { setDateError(true); hasError = true; }
+        if (!form.start) { setTimeError(true); hasError = true; }
+        if (form.lat === 0 || form.lng === 0) { setLocationError(true); hasError = true; }
+        if (hasError) return;
 
-        // Date Validation
-        if (!form.startDate) {
-            setDateError(true);
-            hasError = true;
-        }
-
-        // Time Validation
-        if (!form.start) {
-            setTimeError(true);
-            hasError = true;
-        }
-
-        // Location Lat/Lng Validation
-        if (form.lat === 0 || form.lng === 0) {
-            setLocationError(true);
-            hasError = true;
-        }
-
-        if (hasError) return; // Stop submission if any required field is missing
-
-        // URL Validation
         if (form.facebookUrl && form.facebookUrl.trim() !== '') {
-            try {
-                new URL(form.facebookUrl);
-            } catch (error) {
+            try { new URL(form.facebookUrl); } catch (error) {
                 alert('Zadaná URL není platná. Ujistěte se, že odkaz začíná na "https://".');
                 return;
             }
         }
-
-        if (isCompressing) {
-            alert("Počkejte prosím, obrázek se stále zpracovává.");
-            return;
-        }
+        if (isCompressing) { alert("Počkejte prosím, obrázek se stále zpracovává."); return; }
 
         setLoadingSubmit(true);
 
         try {
             const normalizedFbUrl = await normalizeFacebookUrl(form.facebookUrl);
-
             let posterUrl = '';
             let posterPath = '';
 
@@ -272,15 +238,12 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 posterPath = path;
             }
 
-
             const resizedPosterPath = getResizedImagePath(posterPath);
-
             const startDateString = toLocalDateString(form.startDate);
             const endDateString = toLocalDateString(form.endDate || form.startDate);
-
             const { poster, startDate, endDate, ...rest } = form;
 
-            const newEvent: Omit<Event, 'id'> & { posterPath: string; resizedPosterPath: string } = {
+            const newEvent: Omit<Event, 'id'> & { posterPath: string; resizedPosterPath: string, hostId: string | null } = {
                 ...rest,
                 facebookUrl: normalizedFbUrl,
                 startDate: startDateString,
@@ -291,16 +254,38 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 status: 'pending',
                 lat: form.lat,
                 lng: form.lng,
+                hostId: user ? user.uid : null
             };
 
-            await addDoc(collection(db, 'submissions'), newEvent as any);
-            resetForm();
+            const docRef = await addDoc(collection(db, 'submissions'), newEvent as any);
+
             setLoadingSubmit(false);
-            onSuccess();
+
+            if (user) {
+                resetForm();
+                onSuccess();
+            } else {
+                setCreatedEventId(docRef.id);
+                setShowAuthModal(true);
+            }
+
         } catch (error) {
             console.error('Error submitting event:', error);
             setLoadingSubmit(false);
         }
+    };
+
+    const handleContinueAsGuest = () => {
+        resetForm();
+        onSuccess();
+    };
+
+    const handleRegisterRedirect = () => {
+        navigate('/registrace', { state: { claimEventId: createdEventId } });
+    };
+
+    const handleLoginRedirect = () => {
+        navigate('/prihlaseni', { state: { claimEventId: createdEventId } });
     };
 
     return (
@@ -336,105 +321,45 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                     locale="cs"
                     dateFormat="dd.MM.yyyy"
                     placeholderText="Vyberte datum"
-                    // Pass a red border class if error exists
-                    customInput={
-                        <DatePickerCustomInput
-                            className={`date-picker ${dateError ? 'input-error' : ''}`}
-                        />
-                    }
+                    customInput={<DatePickerCustomInput className={`date-picker ${dateError ? 'input-error' : ''}`} />}
                     isClearable
                 />
-                {dateError && (
-                    <div className="validation-error">
-                        <span>Toto pole je povinné.</span>
-                    </div>
-                )}
+                {dateError && <div className="validation-error"><span>Toto pole je povinné.</span></div>}
 
                 <label>Začátek: *</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
                     onChange={date => {
                         setForm(prev => ({ ...prev, start: date ? date.toTimeString().slice(0, 5) : '' }));
-                        if (date) setTimeError(false); // Clear error when selected
+                        if (date) setTimeError(false);
                     }}
                     locale="cs"
-                    showTimeSelect
-                    showTimeSelectOnly
-                    timeIntervals={15}
-                    timeCaption="Čas"
-                    dateFormat="HH:mm"
+                    showTimeSelect showTimeSelectOnly timeIntervals={15} timeCaption="Čas" dateFormat="HH:mm"
                     placeholderText="Vyberte čas"
-                    // Pass a red border class if error exists
-                    customInput={
-                        <DatePickerCustomInput
-                            className={`date-picker ${timeError ? 'input-error' : ''}`}
-                        />
-                    }
+                    customInput={<DatePickerCustomInput className={`date-picker ${timeError ? 'input-error' : ''}`} />}
                     isClearable
                 />
-                {timeError && (
-                    <div className="validation-error">
-                        <span>Toto pole je povinné.</span>
-                    </div>
-                )}
+                {timeError && <div className="validation-error"><span>Toto pole je povinné.</span></div>}
 
                 <label>Cena:</label>
                 <input type="number" name="price" value={form.price} onChange={handleChange} />
 
                 <label>Místo: *</label>
                 <input
-                    name="location"
-                    value={form.location}
-                    onChange={handleChange}
-                    autoComplete="off"
-                    required
+                    name="location" value={form.location} onChange={handleChange} autoComplete="off" required
                     className={locationError ? 'input-error' : ''}
                 />
-
-                {/* Location Error Message */}
-                {locationError && (
-                    <div className="validation-error">
-                        <span>Prosím vyberte konkrétní místo z nabídky.</span>
-                    </div>
-                )}
+                {locationError && <div className="validation-error"><span>Prosím vyberte konkrétní místo z nabídky.</span></div>}
 
                 {suggestions.length > 0 && (
                     <ul ref={dropdownRef} className="suggestions">
                         {suggestions.map((s, i) => (
-                            <li key={i} onClick={() => handleSelect(s)}>
-                                {s.name}
-                            </li>
+                            <li key={i} onClick={() => handleSelect(s)}>{s.name}</li>
                         ))}
-                        <li style={{
-                            padding: '8px 12px',
-                            textAlign: 'right',
-                            cursor: 'default',
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            alignItems: 'center',
-                        }}>
-                            <a
-                                href="https://mapy.com/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    textDecoration: 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '5px'
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
+                        <li style={{ padding: '8px 12px', textAlign: 'right', cursor: 'default', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <a href="https://mapy.com/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px' }} onClick={(e) => e.stopPropagation()}>
                                 <span style={{ fontSize: '0.8em', color: '#555' }}>Powered by</span>
-                                <img
-                                    src={MapyLogo}
-                                    alt="Mapy.com logo"
-                                    style={{
-                                        height: '15px',
-                                        width: 'auto',
-                                        verticalAlign: 'middle',
-                                    }}
-                                />
+                                <img src={MapyLogo} alt="Mapy.com logo" style={{ height: '15px', width: 'auto', verticalAlign: 'middle' }} />
                             </a>
                         </li>
                     </ul>
@@ -444,22 +369,57 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 <input type="url" name="facebookUrl" value={form.facebookUrl} onChange={handleChange} />
 
                 <label>Plakát:</label>
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFile}
-                    ref={fileInputRef}
-                    disabled={isCompressing}
-                />
+                <input type="file" accept="image/*" onChange={handleFile} ref={fileInputRef} disabled={isCompressing} />
 
                 {isCompressing && <p className="compression-note">Probíhá komprese obrázku...</p>}
                 {compressionError && <p className="error-note">{compressionError}</p>}
-
 
                 <button type="submit" disabled={loadingSubmit || isCompressing}>
                     {loadingSubmit ? 'Odesílám...' : 'Odeslat'}
                 </button>
             </form>
+
+            {/* --- UPDATED AUTH PROMPT MODAL --- */}
+            {showAuthModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000,
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    padding: '16px', backdropFilter: 'blur(3px)'
+                }}>
+                    <div className="card" style={{
+                        maxWidth: '520px', // INCREASED WIDTH
+                        width: '100%',
+                        textAlign: 'center',
+                        boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+                        padding: '48px 32px' // INCREASED PADDING
+                    }}>
+                        <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.8rem' }}>🎉 Událost odeslána!</h2>
+
+                        <p style={{ color: 'var(--muted)', marginBottom: '32px', fontSize: '1.1rem', lineHeight: '1.6' }}>
+                            Chcete mít možnost tuto událost v budoucnu <strong>upravit nebo smazat</strong>?
+                            <br/>
+                            Vytvořte si účet a událost se k němu automaticky přiřadí.
+                        </p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <button className="btn approve" style={{ padding: '14px', fontSize: '1.05rem' }} onClick={handleRegisterRedirect}>
+                                Vytvořit účet (a přiřadit událost)
+                            </button>
+
+                            <button className="btn neutral" style={{ padding: '14px', fontSize: '1.05rem' }} onClick={handleLoginRedirect}>
+                                Přihlásit se (a přiřadit událost)
+                            </button>
+
+                            <div style={{ borderTop: '1px solid var(--line)', margin: '12px 0' }}></div>
+
+                            <button className="btn ghost" style={{ padding: '12px' }} onClick={handleContinueAsGuest}>
+                                Ne, pokračovat jako host
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

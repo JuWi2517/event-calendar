@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
 import '../css/AdminDashboard.css';
 
+// --- Google Icon Component ---
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -15,15 +16,17 @@ const GoogleIcon = () => (
     </svg>
 );
 
-export default function Login() {
+export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
     const [error, setError] = useState('');
 
     const navigate = useNavigate();
     const location = useLocation();
     const auth = getAuth();
 
+    // Helper: Claims the event if ID exists in state
     const handleClaimEvent = async (uid: string) => {
         const claimId = location.state?.claimEventId;
         if (claimId) {
@@ -37,21 +40,33 @@ export default function Login() {
         }
     };
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
+        if (password !== confirmPass) {
+            setError('Hesla se neshodují.');
+            return;
+        }
+        if (password.length < 6) {
+            setError('Heslo musí mít alespoň 6 znaků.');
+            return;
+        }
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+            // 1. Claim Event
             await handleClaimEvent(userCredential.user.uid);
 
-            if (checkIsAdmin(userCredential.user)) {
-                navigate('/admin/dashboard');
-            } else {
-                navigate('/moje-akce');
-            }
+            // 2. Redirect
+            navigate('/moje-akce');
         } catch (err: any) {
-            setError('Chyba přihlášení: ' + (err.message || 'Zkontrolujte údaje'));
+            if (err.code === 'auth/email-already-in-use') {
+                setError('Tento email je již registrován.');
+            } else {
+                setError('Chyba registrace: ' + err.message);
+            }
         }
     };
 
@@ -76,17 +91,17 @@ export default function Login() {
     return (
         <div className="admin-page" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '32px 24px' }}>
-                <h2 className="admin-title" style={{ marginBottom: '24px' }}>Přihlášení</h2>
+                <h2 className="admin-title" style={{ marginBottom: '24px' }}>Registrace</h2>
 
                 {location.state?.claimEventId && (
                     <div style={{ background: 'rgba(32, 201, 151, 0.1)', color: '#20c997', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>
-                        ℹ️ Přihlaste se, abychom mohli událost přiřadit k vašemu účtu.
+                        ℹ️ Vytvořte si účet a vaše událost se k němu automaticky přiřadí.
                     </div>
                 )}
 
                 {error && <div className="validation-error" style={{ marginBottom: '16px' }}>{error}</div>}
 
-                {/* --- 1. GOOGLE BUTTON (Nahoře) --- */}
+                {/* --- STANDARD GOOGLE BUTTON --- */}
                 <button
                     onClick={handleGoogleLogin}
                     type="button"
@@ -119,18 +134,16 @@ export default function Login() {
                     }}
                 >
                     <GoogleIcon />
-                    <span>Přihlásit se přes Google</span>
+                    <span>Registrovat se přes Google</span>
                 </button>
 
-                {/* --- 2. ODDĚLOVAČ --- */}
                 <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 20px' }}>
                     <div style={{ flex: 1, height: '1px', background: 'var(--line)' }}></div>
                     <span style={{ padding: '0 10px', color: 'var(--muted)', fontSize: '0.85rem' }}>nebo</span>
                     <div style={{ flex: 1, height: '1px', background: 'var(--line)' }}></div>
                 </div>
 
-                {/* --- 3. FORMULÁŘ (Dole) --- */}
-                <form onSubmit={handleLogin}>
+                <form onSubmit={handleRegister}>
                     <div className="field">
                         <label>Email</label>
                         <input
@@ -153,19 +166,30 @@ export default function Login() {
                         />
                     </div>
 
+                    <div className="field">
+                        <label>Potvrzení hesla</label>
+                        <input
+                            type="password"
+                            value={confirmPass}
+                            onChange={(e) => setConfirmPass(e.target.value)}
+                            required
+                            placeholder="******"
+                        />
+                    </div>
+
                     <button type="submit" className="btn approve" style={{ width: '100%', marginTop: '12px' }}>
-                        Přihlásit se
+                        Vytvořit účet
                     </button>
                 </form>
 
                 <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--muted)' }}>Nemáte účet? </span>
+                    <span style={{ color: 'var(--muted)' }}>Již máte účet? </span>
                     <Link
-                        to="/registrace"
+                        to="/prihlaseni"
                         state={{ claimEventId: location.state?.claimEventId }}
                         style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
                     >
-                        Zaregistrovat se
+                        Přihlásit se
                     </Link>
                 </div>
             </div>

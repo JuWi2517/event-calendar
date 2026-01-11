@@ -13,7 +13,6 @@ export default function Navbar() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-            // Check if this user is an admin
             setIsAdmin(checkIsAdmin(currentUser));
         });
         return () => unsubscribe();

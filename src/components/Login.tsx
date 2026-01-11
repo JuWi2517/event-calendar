@@ -66,6 +66,10 @@ export default function Login() {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
 
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+
             await handleClaimEvent(result.user.uid);
 
             if (checkIsAdmin(result.user)) {

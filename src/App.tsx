@@ -6,7 +6,7 @@ import { checkIsAdmin } from './utils/adminAuth';
 import ResetPassword from "./components/ResetPassword.tsx";
 import "./css/Global.css";
 
-// Lazy imports...
+
 const Navbar = React.lazy(() => import("./components/Navbar"));
 const Footer = React.lazy(() => import("./components/Footer"));
 const UserLogin = React.lazy(() => import("./components/Login"));
@@ -14,6 +14,7 @@ const UserRegister = React.lazy(() => import("./components/Register"));
 const HostDashboard = React.lazy(() => import("./components/HostDashboard"));
 const AdminPage = React.lazy(() => import("./pages/AdminPage"));
 const PublicPage = React.lazy(() => import("./pages/PublicPage"));
+const PrivacyPolicy = React.lazy(() =>import("./components/PrivacyPolicy.tsx"));
 
 // 1. GENERIC PRIVATE ROUTE (For Hosts)
 function PrivateRoute({ children }: { children: React.ReactElement }) {
@@ -85,6 +86,8 @@ export default function App() {
                     />
 
                     <Route path="reset-hesla" element={<ResetPassword />} />
+
+                    <Route path="gdpr" element={<PrivacyPolicy/>}/>
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

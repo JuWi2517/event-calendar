@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider
+} from "firebase/auth";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
-import '../css/AdminDashboard.css';
+import '../css/Auth.css';
 
 // --- Google Icon Component ---
 const GoogleIcon = () => (
@@ -26,7 +31,6 @@ export default function Register() {
     const location = useLocation();
     const auth = getAuth();
 
-    // Helper: Claims the event if ID exists in state
     const handleClaimEvent = async (uid: string) => {
         const claimId = location.state?.claimEventId;
         if (claimId) {
@@ -48,6 +52,7 @@ export default function Register() {
             setError('Hesla se neshodují.');
             return;
         }
+
         if (password.length < 6) {
             setError('Heslo musí mít alespoň 6 znaků.');
             return;
@@ -55,11 +60,7 @@ export default function Register() {
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-            // 1. Claim Event
             await handleClaimEvent(userCredential.user.uid);
-
-            // 2. Redirect
             navigate('/moje-akce');
         } catch (err: any) {
             if (err.code === 'auth/email-already-in-use') {
@@ -89,108 +90,71 @@ export default function Register() {
     };
 
     return (
-        <div className="admin-page" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '32px 24px' }}>
-                <h2 className="admin-title" style={{ marginBottom: '24px' }}>Registrace</h2>
+        <div className="auth-page">
+            <div className="auth-card">
+                <h2 className="auth-title">Registrace</h2>
 
-                {location.state?.claimEventId && (
-                    <div style={{ background: 'rgba(32, 201, 151, 0.1)', color: '#20c997', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>
-                        ℹ️ Vytvořte si účet a vaše událost se k němu automaticky přiřadí.
-                    </div>
-                )}
+                {error && <div className="validation-error">{error}</div>}
 
-                {error && <div className="validation-error" style={{ marginBottom: '16px' }}>{error}</div>}
-
-                {/* --- STANDARD GOOGLE BUTTON --- */}
                 <button
                     onClick={handleGoogleLogin}
                     type="button"
-                    style={{
-                        width: '100%',
-                        backgroundColor: '#ffffff',
-                        color: '#3c4043',
-                        border: '1px solid #dadce0',
-                        borderRadius: '4px',
-                        padding: '10px 12px',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        fontFamily: 'Roboto, arial, sans-serif',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '12px',
-                        marginBottom: '20px',
-                        transition: 'background-color 0.2s, box-shadow 0.2s',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                    onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f7f8f8';
-                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
-                    }}
+                    className="google-auth-btn"
                 >
                     <GoogleIcon />
                     <span>Registrovat se přes Google</span>
                 </button>
 
-                <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 20px' }}>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--line)' }}></div>
-                    <span style={{ padding: '0 10px', color: 'var(--muted)', fontSize: '0.85rem' }}>nebo</span>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--line)' }}></div>
+                <div className="auth-divider">
+                    <span>nebo</span>
                 </div>
 
                 <form onSubmit={handleRegister}>
-                    <div className="field">
+                    <div className="auth-field">
                         <label>Email</label>
                         <input
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={e => setEmail(e.target.value)}
                             required
-                            placeholder="vas@email.cz"
                         />
                     </div>
 
-                    <div className="field">
+                    <div className="auth-field">
                         <label>Heslo</label>
                         <input
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={e => setPassword(e.target.value)}
                             required
-                            placeholder="******"
                         />
                     </div>
 
-                    <div className="field">
+                    <div className="auth-field">
                         <label>Potvrzení hesla</label>
                         <input
                             type="password"
                             value={confirmPass}
-                            onChange={(e) => setConfirmPass(e.target.value)}
+                            onChange={e => setConfirmPass(e.target.value)}
                             required
-                            placeholder="******"
                         />
                     </div>
 
-                    <button type="submit" className="btn approve" style={{ width: '100%', marginTop: '12px' }}>
+                    <p className="auth-info">
+                        Registrací berete na vědomí{" "}
+                        <Link to="/gdpr" target="_blank">
+                            zásady ochrany osobních údajů
+                        </Link>.
+                    </p>
+
+                    <button type="submit" className="auth-submit">
                         Vytvořit účet
                     </button>
                 </form>
 
-                <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--muted)' }}>Již máte účet? </span>
-                    <Link
-                        to="/prihlaseni"
-                        state={{ claimEventId: location.state?.claimEventId }}
-                        style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
-                    >
-                        Přihlásit se
-                    </Link>
+                <div className="auth-footer">
+                    <span>Již máte účet? </span>
+                    <Link to="/prihlaseni">Přihlásit se</Link>
                 </div>
             </div>
         </div>

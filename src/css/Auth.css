@@ -1,0 +1,153 @@
+/* ---------- PAGE WRAPPER ---------- */
+.auth-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---------- CARD ---------- */
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 32px 24px;
+    background: linear-gradient(180deg, #1b222c, #161c24);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- TITLE ---------- */
+.auth-title {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #f9fafb;
+}
+
+.auth-title::after {
+    content: "";
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: #facc15;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+/* ---------- GOOGLE BUTTON ---------- */
+.google-auth-btn {
+    width: 100%;
+    height: 44px;
+    background: #ffffff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Ubuntu, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.google-auth-btn:hover {
+    background-color: #f7f8f8;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- DIVIDER ---------- */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 0 0 20px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.auth-divider span {
+    padding: 0 10px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+/* ---------- FORM ---------- */
+.auth-field {
+    margin-bottom: 14px;
+}
+
+.auth-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.auth-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #2a3441;
+    background: #1f2937;
+    color: #f9fafb;
+    outline: none;
+}
+
+.auth-field input:focus {
+    border-color: #facc15;
+}
+
+/* ---------- SUBMIT BUTTON ---------- */
+.auth-submit {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    color: #ffffff;
+    background: linear-gradient(180deg, #22c55e, #16a34a);
+}
+
+/* ---------- FOOTER LINKS ---------- */
+.auth-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.auth-footer span {
+    color: #9ca3af;
+}
+
+.auth-footer a {
+    color: #facc15;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* ---------- INFO TEXT ---------- */
+.auth-info {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-align: center;
+}
+
+.auth-info a {
+    color: #facc15;
+    text-decoration: none;
+}

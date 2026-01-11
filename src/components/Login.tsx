@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider
+} from "firebase/auth";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
-import '../css/AdminDashboard.css';
+import '../css/Auth.css';
 
+// --- Google Icon Component ---
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -40,9 +46,9 @@ export default function Login() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
             await handleClaimEvent(userCredential.user.uid);
 
             if (checkIsAdmin(userCredential.user)) {
@@ -51,7 +57,7 @@ export default function Login() {
                 navigate('/moje-akce');
             }
         } catch (err: any) {
-            setError('Chyba přihlášení: ' + (err.message || 'Zkontrolujte údaje'));
+            setError('Chyba přihlášení: zkontrolujte email a heslo.');
         }
     };
 
@@ -69,121 +75,74 @@ export default function Login() {
             }
         } catch (err: any) {
             console.error(err);
-            setError('Chyba Google přihlášení: ' + err.message);
+            setError('Chyba Google přihlášení.');
         }
     };
 
     return (
-        <div className="admin-page" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '32px 24px' }}>
-                <h2 className="admin-title" style={{ marginBottom: '24px' }}>Přihlášení</h2>
+        <div className="auth-page">
+            <div className="auth-card">
+                <h2 className="auth-title">Přihlášení</h2>
 
                 {location.state?.claimEventId && (
-                    <div style={{ background: 'rgba(32, 201, 151, 0.1)', color: '#20c997', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', textAlign: 'center' }}>
-                        ℹ️ Přihlaste se, abychom mohli událost přiřadit k vašemu účtu.
+                    <div className="auth-info">
+                        ℹ️ Přihlaste se, aby bylo možné událost přiřadit k vašemu účtu.
                     </div>
                 )}
 
-                {error && <div className="validation-error" style={{ marginBottom: '16px' }}>{error}</div>}
+                {error && <div className="validation-error">{error}</div>}
 
-                {/* --- 1. GOOGLE BUTTON (Nahoře) --- */}
                 <button
                     onClick={handleGoogleLogin}
                     type="button"
-                    style={{
-                        width: '100%',
-                        backgroundColor: '#ffffff',
-                        color: '#3c4043',
-                        border: '1px solid #dadce0',
-                        borderRadius: '4px',
-                        padding: '10px 12px',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        fontFamily: 'Roboto, arial, sans-serif',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '12px',
-                        marginBottom: '20px',
-                        transition: 'background-color 0.2s, box-shadow 0.2s',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                    onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f7f8f8';
-                        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
-                    }}
+                    className="google-auth-btn"
                 >
                     <GoogleIcon />
                     <span>Přihlásit se přes Google</span>
                 </button>
 
-                {/* --- 2. ODDĚLOVAČ --- */}
-                <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 20px' }}>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--line)' }}></div>
-                    <span style={{ padding: '0 10px', color: 'var(--muted)', fontSize: '0.85rem' }}>nebo</span>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--line)' }}></div>
+                <div className="auth-divider">
+                    <span>nebo</span>
                 </div>
 
-                {/* --- 3. FORMULÁŘ (Dole) --- */}
                 <form onSubmit={handleLogin}>
-                    <div className="field">
+                    <div className="auth-field">
                         <label>Email</label>
                         <input
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={e => setEmail(e.target.value)}
                             required
-                            placeholder="vas@email.cz"
                         />
                     </div>
 
-                    <div className="field">
+                    <div className="auth-field">
                         <label>Heslo</label>
                         <input
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={e => setPassword(e.target.value)}
                             required
-                            placeholder="******"
                         />
                     </div>
 
-                    <button type="submit" className="btn approve" style={{ width: '100%', marginTop: '12px' }}>
+                    <button type="submit" className="auth-submit">
                         Přihlásit se
                     </button>
                 </form>
 
-                <div style={{
-                    marginTop: '24px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '0.85rem' // Menší písmo pro oba odkazy
-                }}>
-                    {/* Odkaz na registraci (VLEVO) */}
+                <div className="auth-footer" style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div>
-                        <span style={{ color: 'var(--muted)' }}>Nemáte účet? </span>
+                        <span>Nemáte účet? </span>
                         <Link
                             to="/registrace"
                             state={{ claimEventId: location.state?.claimEventId }}
-                            style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
                         >
                             Zaregistrovat se
                         </Link>
                     </div>
 
-                    {/* Odkaz na reset hesla (VPRAVO) */}
-                    <Link
-                        to="/reset-hesla"
-                        style={{ color: 'var(--muted)', textDecoration: 'none' }}
-                        onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                        onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
-                    >
+                    <Link to="/reset-hesla" style={{ fontWeight: 400 }}>
                         Zapomněli jste heslo?
                     </Link>
                 </div>

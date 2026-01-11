@@ -111,9 +111,7 @@ export default function CalendarView() {
             const today = new Date();
             const currentYear = today.getFullYear();
             const currentMonthIndex = today.getMonth();
-            const targetYear = monthIndex < currentMonthIndex
-                ? currentYear + 1
-                : currentYear;
+            const targetYear = monthIndex < currentMonthIndex ? currentYear + 1 : currentYear;
             openToMonth = new Date(targetYear, monthIndex, 1);
         }
     }

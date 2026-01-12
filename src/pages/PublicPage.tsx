@@ -3,13 +3,15 @@ import PhotoCarousel from '../components/PhotoCarousel';
 import LoadOnScroll from '../components/LoadOnScroll';
 import '../css/PublicPage.css';
 import img9903 from '../assets/Photos/DSC_9903-Enhanced-NR.webp';
-import img3193 from '../assets/Photos/DSC_3193-Enhanced-NR.webp';
 import img9694 from '../assets/Photos/DSC_9694-Enhanced-NR.webp';
+import img9166 from '../assets/Photos/DSC_9166-Enhanced-NR.webp';
+import img3182 from '../assets/Photos/DSC_3182-Enhanced-NR.webp';
 
 const carouselImages = [
     img9903,
-    img3193,
     img9694,
+    img9166,
+    img3182,
 ];
 
 const EventForm = lazy(() => import('../components/EventForm'));

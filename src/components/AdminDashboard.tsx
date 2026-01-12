@@ -408,7 +408,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="field">
                                 <label>Cena</label>
-                                <input value={editedEvent.price || ''} onChange={e => setField('price', e.target.value)} />
+                                <input type="number" value={editedEvent.price || ''} onChange={e => setField('price', e.target.value)} />
                             </div>
                             <div className="field">
                                 <label>Místo</label>

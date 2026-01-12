@@ -1,0 +1,73 @@
+.privacy-policy {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 4rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.7;
+    color: #e5e7eb; /* světle šedá na tmavém pozadí */
+}
+
+/* Header */
+.privacy-policy header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+}
+
+.privacy-policy h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #f9fafb;
+}
+
+.privacy-policy header p {
+    font-size: 0.95rem;
+    color: #9ca3af;
+}
+
+/* Sekce */
+.privacy-policy section {
+    margin-bottom: 2.8rem;
+}
+
+/* Nadpisy sekcí */
+.privacy-policy h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    color: #f9fafb;
+}
+
+/* Text */
+.privacy-policy p {
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+/* Seznamy */
+.privacy-policy ul {
+    padding-left: 1.4rem;
+    margin-top: 0.75rem;
+}
+
+.privacy-policy li {
+    margin-bottom: 0.6rem;
+    color: #d1d5db;
+}
+
+/* Odkazy */
+.privacy-policy a {
+    color: #facc15; /* žlutá jako CTA tlačítko */
+    text-decoration: underline;
+}
+
+.privacy-policy a:hover {
+    text-decoration: none;
+}
+
+/* Zvýraznění */
+.privacy-policy strong {
+    color: #f9fafb;
+    font-weight: 600;
+}

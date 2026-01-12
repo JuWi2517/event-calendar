@@ -1,10 +1,13 @@
 import "../css/PublicPage.css"
+import {Link} from "react-router-dom";
 export default function Footer() {
     return (
         <section className="footer">
             <div className="footer-container">
                 <p className="footer-text">
                     Web vytvořil: Jan Richter
+                    <span className="separator">•</span>
+                    <Link className="footer-link" to="/gdpr">GDPR</Link>
                     <span className="separator">•</span>
                     Tento web nepoužívá žádné cookies.
                     <span className="separator">•</span>

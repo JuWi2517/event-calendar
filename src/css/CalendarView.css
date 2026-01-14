@@ -43,7 +43,7 @@
 /* --- Filter Bar --- */
 .filter-bar {
     display: flex;
-    align-items: center; /* Vertically aligns all filter items */
+    align-items: stretch; /* Vertically aligns all filter items */
     flex-wrap: wrap;     /* Allows items to wrap on small screens */
     gap: 1rem;           /* Creates consistent space between items */
 

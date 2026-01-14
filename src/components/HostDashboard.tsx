@@ -363,11 +363,11 @@ export default function HostDashboard() {
                         </div>
                         <div className="modal-grid">
                             <div className="field">
-                                <label>Název</label>
+                                <label>Název:</label>
                                 <input value={editedEvent.title || ''} onChange={e => setField('title', e.target.value)} required />
                             </div>
                             <div className="field">
-                                <label>Datum</label>
+                                <label>Datum:</label>
                                 {/* --- UPDATED DATE PICKER --- */}
                                 <ReactDatePicker
                                     selected={editedEvent.startDate ? new Date(editedEvent.startDate) : null}
@@ -381,7 +381,7 @@ export default function HostDashboard() {
                                 />
                             </div>
                             <div className="field">
-                                <label>Čas</label>
+                                <label>Čas:</label>
                                 {/* --- UPDATED TIME PICKER --- */}
                                 <ReactDatePicker
                                     selected={editedEvent.start ? new Date(`1970-01-01T${editedEvent.start}`) : null}
@@ -393,7 +393,7 @@ export default function HostDashboard() {
                                 />
                             </div>
                             <div className="field">
-                                <label>Kategorie</label>
+                                <label>Kategorie:</label>
                                 <select value={editedEvent.category || ''} onChange={e => setField('category', e.target.value)}>
                                     <option value="">Všechny kategorie</option>
                                     <option value="koncert">Koncerty</option>
@@ -407,11 +407,11 @@ export default function HostDashboard() {
                                 </select>
                             </div>
                             <div className="field">
-                                <label>Cena</label>
+                                <label>Cena:</label>
                                 <input type="number" value={editedEvent.price || ''} onChange={e => setField('price', e.target.value)} />
                             </div>
                             <div className="field">
-                                <label>Místo</label>
+                                <label>Místo:</label>
                                 <input
                                     value={editedEvent.location || ''}
                                     onChange={e => {
@@ -441,11 +441,11 @@ export default function HostDashboard() {
                                 )}
                             </div>
                             <div className="field">
-                                <label>Facebook URL</label>
+                                <label>Odkaz na  událost:</label>
                                 <input type="url" value={editedEvent.facebookUrl || ''} onChange={e => setField('facebookUrl', e.target.value)} />
                             </div>
                             <div className="field">
-                                <label>Plakát</label>
+                                <label>Plakát:</label>
                                 {editedEvent.posterUrl && (
                                     <img src={editedEvent.posterUrl} className="poster-preview" alt="Poster" onClick={() => setFullScreenImageUrl(editedEvent.posterUrl || null)} />
                                 )}

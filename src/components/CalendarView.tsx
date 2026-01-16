@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Event } from '../types/Event';
@@ -25,6 +25,7 @@ const formatDateRange = (startStr: string, endStr: string | undefined): string =
     const end = new Date(endStr).toLocaleDateString('cs-CZ');
     return `${start} - ${end}`;
 };
+
 const formatMonthYearKey = (key: string): string => {
     const [year, monthNum] = key.split('-');
     const monthIndex = parseInt(monthNum, 10) - 1;
@@ -36,6 +37,20 @@ const formatMonthYearKey = (key: string): string => {
     return monthNames[monthIndex];
 };
 
+// Custom Input Component for DatePicker (same as in EventForm)
+// eslint-disable-next-line react/display-name
+const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
+    ({ value, onClick, placeholder }, ref) => (
+        <button
+            className="react-datepicker-button"
+            onClick={onClick}
+            ref={ref}
+            type="button"
+        >
+            {value || placeholder}
+        </button>
+    )
+);
 
 export default function CalendarView() {
     const [eventsByMonth, setEventsByMonth] = useState<Record<string, Event[]>>({});
@@ -144,9 +159,12 @@ export default function CalendarView() {
                         placeholderText="Filtrovat podle dne"
                         dateFormat="d. MMMM yyyy"
                         isClearable
-                        onFocus={(e) => e.target.blur()}
-                        onKeyDown={(e) => e.preventDefault()}
                         openToDate={openToMonth}
+                        customInput={
+                            <DatePickerCustomInput
+                                className="react-datepicker-button"
+                            />
+                        }
                     />
                 </div>
 
@@ -169,8 +187,6 @@ export default function CalendarView() {
                                     {list.map(ev => (
                                         <div key={ev.id} className="event-card" onClick={() => setModalEvent(ev)}>
                                             <div className="event-header">
-
-
                                                 <PosterPathFinder
                                                     path={ev.resizedPosterPath}
                                                     fallbackPath={ev.posterPath}

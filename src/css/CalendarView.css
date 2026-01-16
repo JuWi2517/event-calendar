@@ -43,7 +43,7 @@
 /* --- Filter Bar --- */
 .filter-bar {
     display: flex;
-    align-items: center; /* Vertically aligns all filter items */
+    align-items: stretch; /* Vertically aligns all filter items */
     flex-wrap: wrap;     /* Allows items to wrap on small screens */
     gap: 1rem;           /* Creates consistent space between items */
 
@@ -55,8 +55,7 @@
 }
 
 /* Common styles for all filter controls to ensure they look the same */
-.filter-bar select,
-.filter-bar .react-datepicker-wrapper input {
+.filter-bar select{
     /* Layout */
     flex: 1; /* Allows each item to grow and fill available space */
     min-width: 200px; /* Prevents items from becoming too small */
@@ -85,19 +84,78 @@
 }
 
 /* Focus state for better accessibility */
-.filter-bar select:focus,
-.filter-bar .react-datepicker-wrapper input:focus {
+.filter-bar select:focus{
     outline: none;
     border-color: var(--accent-primary); /* #fcc200 */
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
 /* Make the datepicker wrapper behave like other flex items */
-.filter-bar .react-datepicker-wrapper,
-.filter-bar .react-datepicker__input-container {
+.filter-bar .react-datepicker-wrapper{
     flex: 1;
     display: flex; /* Ensures the input inside fills the wrapper */
     min-width: 200px;
+}
+
+.filter-bar .react-datepicker-button {
+    /* Layout – stejné jako select */
+    flex: 1;
+    min-width: 200px;
+    width: 100%;
+
+    padding: 0.8rem 1rem;
+    padding-right: 2.5rem; /* místo pro šipku */
+
+    font-size: 1rem;
+    line-height: 1.5;
+
+    /* Barvy – stejné proměnné */
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+
+    cursor: pointer;
+    text-align: left;
+
+    /* Zarovnání obsahu */
+    display: flex;
+    align-items: center;
+
+    transition: all 0.2s ease;
+
+    /* odstranění default button stylů */
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* Hover – stejné chování jako select */
+.filter-bar .datepicker-button:hover {
+    border-color: var(--accent-hover);
+}
+
+/* Focus – stejné jako select */
+.filter-bar .datepicker-button:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+/* Šipka – identická SVG jako u select */
+.filter-bar .datepicker-button {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A0AEC0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1.25em;
+}
+
+/* Wrapper se chová stejně jako select */
+.filter-bar .react-datepicker-wrapper {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
 }
 
 /* --- 3. Month Groups & Event Grid --- */

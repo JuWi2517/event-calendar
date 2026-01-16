@@ -297,7 +297,7 @@ export default function EventForm({ onSuccess }: { onSuccess: () => void }) {
                 </p>
 
                 <label>Název: *</label>
-                <input name="title" value={form.title} onChange={handleChange} required />
+                <input type="text" maxLength="70" name="title" value={form.title} onChange={handleChange} required />
 
                 <label>Kategorie: *</label>
                 <select name="category" value={form.category} onChange={handleChange} required>

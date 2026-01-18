@@ -1,14 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import Sitemap from 'vite-plugin-sitemap'
 
 export default defineConfig({
-
     base: '/',
-    plugins: [react()],
-    server: {
-        headers: {
-            'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-            'Cross-Origin-Embedder-Policy': 'unsafe-none'
-        }
-    }
+    plugins: [
+        react(),
+        Sitemap({
+            hostname: 'https://www.planujlouny.cz',
+            dynamicRoutes: [
+                '/',
+                '/prihlaseni',
+                '/registrace',
+                '/reset-hesla',
+                '/gdpr'
+            ],
+            exclude: ['/moje-akce', '/admin/dashboard'],
+            readable: true,
+        }),
+    ],
 })

@@ -1,5 +1,8 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import "../css/PrivacyPolicy.css"
+
+
+
 
 interface PrivacyPolicyProps {
     siteName?: string;
@@ -17,6 +20,18 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({
                                                          lastUpdated = "11.1.2026",
                                                          className = "privacy-policy"
                                                      }) => {
+
+    useEffect(() => {
+        const meta = document.createElement('meta');
+        meta.name = "robots";
+        meta.content = "noindex, nofollow";
+
+        document.head.appendChild(meta);
+
+        return () => {
+            document.head.removeChild(meta);
+        };
+    }, []);
     return (
         <div className={className}>
             <header>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     getAuth,
     signInWithEmailAndPassword,
@@ -29,6 +29,18 @@ export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const auth = getAuth();
+
+    useEffect(() => {
+        const meta = document.createElement('meta');
+        meta.name = "robots";
+        meta.content = "noindex, nofollow";
+
+        document.head.appendChild(meta);
+
+        return () => {
+            document.head.removeChild(meta);
+        };
+    }, []);
 
     const handleClaimEvent = async (uid: string) => {
         const claimId = location.state?.claimEventId;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // <--- Tady přidán useEffect
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { Link } from 'react-router-dom';
 import '../css/AdminDashboard.css';
@@ -10,6 +10,18 @@ export default function ResetPassword() {
     const [loading, setLoading] = useState(false);
 
     const auth = getAuth();
+
+    useEffect(() => {
+        const meta = document.createElement('meta');
+        meta.name = "robots";
+        meta.content = "noindex, nofollow";
+
+        document.head.appendChild(meta);
+
+        return () => {
+            document.head.removeChild(meta);
+        };
+    }, []);
 
     const handleReset = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -8,251 +8,507 @@ import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/CalendarView.css';
-import PosterPathFinder from "../components/PosterPathFinder";
-import LoadOnScroll from "../components/LoadOnScroll";
+import PosterPathFinder from '../components/PosterPathFinder';
+import LoadOnScroll from '../components/LoadOnScroll';
+
+// Shared imports
+import { CATEGORY_OPTIONS } from '../shared';
 
 registerLocale('cs', cs);
 
-const monthNames = [
-    'Leden','Únor','Březen','Duben','Květen','Červen',
-    'Červenec','Srpen','Září','Říjen','Listopad','Prosinec'
+// ============================================================================
+// Types
+// ============================================================================
+
+interface DatePickerInputProps {
+    value?: string;
+    onClick?: () => void;
+    placeholder?: string;
+    className?: string;
+}
+
+type EventsByMonth = Record<string, Event[]>;
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const MONTH_NAMES = [
+    'Leden',
+    'Únor',
+    'Březen',
+    'Duben',
+    'Květen',
+    'Červen',
+    'Červenec',
+    'Srpen',
+    'Září',
+    'Říjen',
+    'Listopad',
+    'Prosinec',
 ];
 
-const formatDateRange = (startStr: string, endStr: string | undefined): string => {
-    if (!startStr) return 'Datum nespecifikováno';
-    const start = new Date(startStr).toLocaleDateString('cs-CZ');
-    if (!endStr || startStr === endStr) return start;
-    const end = new Date(endStr).toLocaleDateString('cs-CZ');
-    return `${start} - ${end}`;
-};
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
-const formatMonthYearKey = (key: string): string => {
+function formatDateRange(startStr: string, endStr: string | undefined): string {
+    if (!startStr) {
+        return 'Datum nespecifikováno';
+    }
+
+    const startDate = new Date(startStr);
+    const formattedStart = startDate.toLocaleDateString('cs-CZ');
+
+    if (!endStr || startStr === endStr) {
+        return formattedStart;
+    }
+
+    const endDate = new Date(endStr);
+    const formattedEnd = endDate.toLocaleDateString('cs-CZ');
+
+    return `${formattedStart} - ${formattedEnd}`;
+}
+
+function formatMonthYearKey(key: string): string {
     const [year, monthNum] = key.split('-');
     const monthIndex = parseInt(monthNum, 10) - 1;
     const currentYear = new Date().getFullYear();
 
+    // Only show year if it's different from current year
     if (parseInt(year, 10) !== currentYear) {
-        return `${monthNames[monthIndex]} ${year}`;
+        return `${MONTH_NAMES[monthIndex]} ${year}`;
     }
-    return monthNames[monthIndex];
-};
 
-// Custom Input Component for DatePicker (same as in EventForm)
-// eslint-disable-next-line react/display-name
-const DatePickerCustomInput = forwardRef<HTMLButtonElement, any>(
-    ({ value, onClick, placeholder }, ref) => (
-        <button
-            className="react-datepicker-button"
-            onClick={onClick}
-            ref={ref}
-            type="button"
-        >
-            {value || placeholder}
-        </button>
-    )
+    return MONTH_NAMES[monthIndex];
+}
+
+function createMonthKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+function groupEventsByMonth(events: Event[]): EventsByMonth {
+    const grouped: EventsByMonth = {};
+
+    events.forEach((event) => {
+        const date = new Date(event.startDate);
+        const key = createMonthKey(date);
+
+        if (!grouped[key]) {
+            grouped[key] = [];
+        }
+
+        grouped[key].push(event);
+    });
+
+    // Sort events within each month by start date
+    Object.values(grouped).forEach((monthEvents) => {
+        monthEvents.sort((a, b) => {
+            const dateA = new Date(a.startDate).getTime();
+            const dateB = new Date(b.startDate).getTime();
+            return dateA - dateB;
+        });
+    });
+
+    return grouped;
+}
+
+function isDateInEventRange(
+    filterDate: Date,
+    eventStartStr: string,
+    eventEndStr: string | undefined
+): boolean {
+    const eventStart = new Date(eventStartStr);
+    const eventEnd = new Date(eventEndStr || eventStartStr);
+    const normalizedFilter = new Date(filterDate);
+
+    // Normalize all dates to midnight for comparison
+    eventStart.setHours(0, 0, 0, 0);
+    eventEnd.setHours(0, 0, 0, 0);
+    normalizedFilter.setHours(0, 0, 0, 0);
+
+    return normalizedFilter >= eventStart && normalizedFilter <= eventEnd;
+}
+
+// ============================================================================
+// Components
+// ============================================================================
+
+const DatePickerCustomInput = forwardRef<HTMLButtonElement, DatePickerInputProps>(
+    function DatePickerCustomInput({ value, onClick, placeholder }, ref) {
+        return (
+            <button
+                className="react-datepicker-button"
+                onClick={onClick}
+                ref={ref}
+                type="button"
+            >
+                {value || placeholder}
+            </button>
+        );
+    }
 );
 
+// ============================================================================
+// Main Component
+// ============================================================================
+
 export default function CalendarView() {
-    const [eventsByMonth, setEventsByMonth] = useState<Record<string, Event[]>>({});
-    const [categoryFilter, setCategoryFilter] = useState<string>('');
-    const [monthFilter, setMonthFilter] = useState<string>('');
+    // Data state
+    const [eventsByMonth, setEventsByMonth] = useState<EventsByMonth>({});
+
+    // Filter state
+    const [categoryFilter, setCategoryFilter] = useState('');
+    const [monthFilter, setMonthFilter] = useState('');
     const [dateFilter, setDateFilter] = useState<Date | null>(null);
+
+    // Modal state
     const [modalEvent, setModalEvent] = useState<Event | null>(null);
 
+    // ========================================================================
+    // Data Loading
+    // ========================================================================
+
     useEffect(() => {
-        (async () => {
+        async function loadEvents() {
+            // Get today's date at midnight
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-
             const todayStr = today.toISOString().slice(0, 10);
 
-            const q = query(
+            // Query for approved events that haven't ended yet
+            const eventsQuery = query(
                 collection(db, 'events'),
                 where('status', '==', 'approved'),
                 where('endDate', '>=', todayStr),
                 orderBy('endDate', 'asc')
             );
 
-            const snap = await getDocs(q);
+            const snapshot = await getDocs(eventsQuery);
 
-            const futureEvents: Event[] = snap.docs.map(docSnap => ({
-                id: docSnap.id,
-                ...(docSnap.data() as Event),
+            const events: Event[] = snapshot.docs.map((document) => ({
+                id: document.id,
+                ...(document.data() as Event),
             }));
 
-            const grouped: Record<string, Event[]> = {};
-            futureEvents.forEach(ev => {
-                const date = new Date(ev.startDate);
-                const year = date.getFullYear();
-                const monthIdx = date.getMonth();
-                const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}`;
-
-                if (!grouped[key]) grouped[key] = [];
-                grouped[key].push(ev);
-            });
-
-            Object.values(grouped).forEach(arr =>
-                arr.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-            );
-
+            const grouped = groupEventsByMonth(events);
             setEventsByMonth(grouped);
-        })();
+        }
+
+        void loadEvents();
     }, []);
 
-    const filtered = (arr: Event[] = []) => arr
-        .filter(ev => !categoryFilter || ev.category === categoryFilter)
-        .filter(ev => {
-            if (!monthFilter) return true;
-            const m = new Date(ev.startDate).getMonth();
-            return monthNames[m] === monthFilter;
-        })
-        .filter(ev => {
-            if (!dateFilter) return true;
-            const eventStart = new Date(ev.startDate);
-            const eventEnd = new Date(ev.endDate || ev.startDate);
-            const filterDate = new Date(dateFilter);
-            eventStart.setHours(0, 0, 0, 0);
-            eventEnd.setHours(0, 0, 0, 0);
-            filterDate.setHours(0, 0, 0, 0);
-            return filterDate >= eventStart && filterDate <= eventEnd;
-        });
+    // ========================================================================
+    // Filtering
+    // ========================================================================
+
+    function filterEvents(events: Event[]): Event[] {
+        return events
+            .filter((event) => {
+                // Category filter
+                if (categoryFilter && event.category !== categoryFilter) {
+                    return false;
+                }
+                return true;
+            })
+            .filter((event) => {
+                // Month filter
+                if (!monthFilter) {
+                    return true;
+                }
+                const eventMonth = new Date(event.startDate).getMonth();
+                return MONTH_NAMES[eventMonth] === monthFilter;
+            })
+            .filter((event) => {
+                // Date filter
+                if (!dateFilter) {
+                    return true;
+                }
+                return isDateInEventRange(dateFilter, event.startDate, event.endDate);
+            });
+    }
+
+    // Calculate which month to open the date picker to
+    function getOpenToMonth(): Date | undefined {
+        if (!monthFilter) {
+            return undefined;
+        }
+
+        const monthIndex = MONTH_NAMES.indexOf(monthFilter);
+        if (monthIndex === -1) {
+            return undefined;
+        }
+
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+
+        // If selected month is before current month, assume next year
+        const targetYear = monthIndex < currentMonth ? currentYear + 1 : currentYear;
+
+        return new Date(targetYear, monthIndex, 1);
+    }
+
+    // ========================================================================
+    // Event Handlers
+    // ========================================================================
+
+    function handleCategoryChange(event: React.ChangeEvent<HTMLSelectElement>) {
+        setCategoryFilter(event.target.value);
+    }
+
+    function handleMonthChange(event: React.ChangeEvent<HTMLSelectElement>) {
+        setMonthFilter(event.target.value);
+    }
+
+    function handleDateChange(date: Date | null) {
+        setDateFilter(date);
+    }
+
+    function handleEventClick(event: Event) {
+        setModalEvent(event);
+    }
+
+    function handleModalClose() {
+        setModalEvent(null);
+    }
+
+    function handleModalBackdropClick() {
+        setModalEvent(null);
+    }
+
+    function handleModalContentClick(clickEvent: React.MouseEvent) {
+        clickEvent.stopPropagation();
+    }
+
+    // ========================================================================
+    // Render Helpers
+    // ========================================================================
+
+    function renderFilterBar() {
+        return (
+            <div className="filter-bar">
+                {/* Category Filter */}
+                <select value={categoryFilter} onChange={handleCategoryChange}>
+                    {CATEGORY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
+
+                {/* Month Filter */}
+                <select value={monthFilter} onChange={handleMonthChange}>
+                    <option value="">Všechny měsíce</option>
+                    {MONTH_NAMES.map((month) => (
+                        <option key={month} value={month}>
+                            {month}
+                        </option>
+                    ))}
+                </select>
+
+                {/* Date Filter */}
+                <ReactDatePicker
+                    locale="cs"
+                    selected={dateFilter}
+                    onChange={handleDateChange}
+                    placeholderText="Filtrovat podle dne"
+                    dateFormat="d. MMMM yyyy"
+                    isClearable
+                    openToDate={getOpenToMonth()}
+                    customInput={
+                        <DatePickerCustomInput className="react-datepicker-button" />
+                    }
+                />
+            </div>
+        );
+    }
+
+    function renderEventCard(event: Event) {
+        function handleClick() {
+            handleEventClick(event);
+        }
+
+        return (
+            <div key={event.id} className="event-card" onClick={handleClick}>
+                <div className="event-header">
+                    <PosterPathFinder
+                        path={event.resizedPosterPath}
+                        fallbackPath={event.posterPath}
+                        alt={event.title}
+                        className="poster"
+                        loading="lazy"
+                    />
+                    <h3>{event.title}</h3>
+                </div>
+
+                <div className="event-meta">
+                    <p>
+                        <Calendar size={16} />
+                        {formatDateRange(event.startDate, event.endDate)}
+                    </p>
+
+                    <p>
+                        <Clock size={16} />
+                        {event.start}
+                    </p>
+
+                    <p>
+                        <MapPin size={16} />
+                        {event.location}
+                    </p>
+
+                    {event.price && (
+                        <p>
+                            <CoinsIcon size={16} />
+                            {event.price} Kč
+                        </p>
+                    )}
+
+                    {event.category && (
+                        <p>
+                            <Tag size={16} />
+                            {event.category}
+                        </p>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    function renderMonthGroup(monthKey: string) {
+        const monthEvents = eventsByMonth[monthKey];
+        const filteredEvents = filterEvents(monthEvents || []);
+
+        if (filteredEvents.length === 0) {
+            return null;
+        }
+
+        const placeholder = (
+            <div className="month-group-placeholder">
+                <h2>{formatMonthYearKey(monthKey)}</h2>
+                <div className="events-grid-placeholder" />
+            </div>
+        );
+
+        return (
+            <LoadOnScroll key={monthKey} fallback={placeholder}>
+                <div className="month-group">
+                    <h2>{formatMonthYearKey(monthKey)}</h2>
+                    <div className="events-grid">
+                        {filteredEvents.map((event) => renderEventCard(event))}
+                    </div>
+                </div>
+            </LoadOnScroll>
+        );
+    }
+
+    function renderLocationLink(event: Event) {
+        const hasCoordinates = event.lat && event.lng;
+
+        if (hasCoordinates) {
+            const mapUrl = `https://mapy.com/zakladni?q=${event.lat},${event.lng}`;
+
+            return (
+                <p>
+                    <MapPin size={16} /> Místo:{' '}
+                    <a
+                        href={mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Zobrazit na mapě"
+                    >
+                        {event.location}
+                    </a>
+                </p>
+            );
+        }
+
+        return (
+            <p>
+                <MapPin size={16} /> Místo: {event.location}
+            </p>
+        );
+    }
+
+    function renderModal() {
+        if (!modalEvent) {
+            return null;
+        }
+
+        return (
+            <div className="modal-backdrop" onClick={handleModalBackdropClick}>
+                <div className="modal" onClick={handleModalContentClick}>
+                    <PosterPathFinder
+                        path={modalEvent.posterPath}
+                        fallbackPath={modalEvent.posterPath}
+                        alt={modalEvent.title}
+                        className="modal-poster"
+                        loading="eager"
+                    />
+
+                    <h2>{modalEvent.title}</h2>
+
+                    <p>
+                        <Calendar size={16} /> Datum:{' '}
+                        {formatDateRange(modalEvent.startDate, modalEvent.endDate)}
+                    </p>
+
+                    <p>
+                        <Clock size={16} /> Začátek: {modalEvent.start}
+                    </p>
+
+                    {renderLocationLink(modalEvent)}
+
+                    {modalEvent.price && (
+                        <p>
+                            <CoinsIcon size={16} /> {modalEvent.price} Kč
+                        </p>
+                    )}
+
+                    {modalEvent.category && (
+                        <p>
+                            <Tag size={16} /> {modalEvent.category}
+                        </p>
+                    )}
+
+                    {modalEvent.facebookUrl && (
+                        <p>
+                            <a
+                                href={modalEvent.facebookUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                Odkaz na událost
+                            </a>
+                        </p>
+                    )}
+
+                    <button onClick={handleModalClose} className="close-button">
+                        Zavřít
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ========================================================================
+    // Main Render
+    // ========================================================================
 
     const sortedMonthKeys = Object.keys(eventsByMonth).sort();
-
-    let openToMonth: Date | undefined = undefined;
-    if (monthFilter) {
-        const monthIndex = monthNames.indexOf(monthFilter);
-        if (monthIndex > -1) {
-            const today = new Date();
-            const currentYear = today.getFullYear();
-            const currentMonthIndex = today.getMonth();
-            const targetYear = monthIndex < currentMonthIndex ? currentYear + 1 : currentYear;
-            openToMonth = new Date(targetYear, monthIndex, 1);
-        }
-    }
 
     return (
         <div className="calendar-view">
             <div className="cv-container">
-                <div className="filter-bar">
-                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-                        <option value="">Všechny kategorie</option>
-                        <option value="koncert">Koncerty</option>
-                        <option value="sport">Sport</option>
-                        <option value="pro děti">Pro děti</option>
-                        <option value="divadlo">Divadlo</option>
-                        <option value="kino">Kino</option>
-                        <option value="výstava">Výstavy</option>
-                        <option value="přednáška">Přednášky</option>
-                        <option value="slavnost">Slavnosti</option>
-                    </select>
+                {renderFilterBar()}
 
-                    <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)}>
-                        <option value="">Všechny měsíce</option>
-                        {monthNames.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
+                {sortedMonthKeys.map((monthKey) => renderMonthGroup(monthKey))}
 
-                    <ReactDatePicker
-                        locale="cs"
-                        selected={dateFilter}
-                        onChange={(d) => setDateFilter(d)}
-                        placeholderText="Filtrovat podle dne"
-                        dateFormat="d. MMMM yyyy"
-                        isClearable
-                        openToDate={openToMonth}
-                        customInput={
-                            <DatePickerCustomInput
-                                className="react-datepicker-button"
-                            />
-                        }
-                    />
-                </div>
-
-                {sortedMonthKeys.map(monthKey => {
-                    const list = filtered(eventsByMonth[monthKey]);
-                    if (!list || list.length === 0) return null;
-                    return (
-                        <LoadOnScroll
-                            key={monthKey}
-                            fallback={
-                                <div className="month-group-placeholder">
-                                    <h2>{formatMonthYearKey(monthKey)}</h2>
-                                    <div className="events-grid-placeholder" />
-                                </div>
-                            }
-                        >
-                            <div className="month-group">
-                                <h2>{formatMonthYearKey(monthKey)}</h2>
-                                <div className="events-grid">
-                                    {list.map(ev => (
-                                        <div key={ev.id} className="event-card" onClick={() => setModalEvent(ev)}>
-                                            <div className="event-header">
-                                                <PosterPathFinder
-                                                    path={ev.resizedPosterPath}
-                                                    fallbackPath={ev.posterPath}
-                                                    alt={ev.title}
-                                                    className="poster"
-                                                    loading="lazy"
-                                                />
-                                                <h3>{ev.title}</h3>
-                                            </div>
-                                            <div className="event-meta">
-                                                <p><Calendar size={16} /> {formatDateRange(ev.startDate, ev.endDate)}</p>
-                                                <p><Clock size={16} /> {ev.start}</p>
-                                                <p><MapPin size={16} /> {ev.location}</p>
-                                                {ev.price && <p><CoinsIcon size={16} /> {ev.price} Kč</p>}
-                                                {ev.category && <p><Tag size={16} /> {ev.category}</p>}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </LoadOnScroll>
-                    );
-                })}
-
-                {modalEvent && (
-                    <div className="modal-backdrop" onClick={() => setModalEvent(null)}>
-                        <div className="modal" onClick={e => e.stopPropagation()}>
-
-                            <PosterPathFinder
-                                path={modalEvent.posterPath}
-                                fallbackPath={modalEvent.posterPath}
-                                alt={modalEvent.title}
-                                className="modal-poster"
-                                loading="eager"
-                            />
-
-                            <h2>{modalEvent.title}</h2>
-                            <p><Calendar size={16} /> Datum: {formatDateRange(modalEvent.startDate, modalEvent.endDate)}</p>
-                            <p><Clock size={16} /> Začátek: {modalEvent.start}</p>
-
-                            {modalEvent.lat && modalEvent.lng ? (
-                                <p>
-                                    <MapPin size={16} /> Místo:{" "}
-                                    <a
-                                        href={`https://mapy.com/zakladni?q=${modalEvent.lat},${modalEvent.lng}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        title="Zobrazit na mapě"
-                                    >
-                                        {modalEvent.location}
-                                    </a>
-                                </p>
-                            ) : (
-                                <p><MapPin size={16} /> Místo: {modalEvent.location}</p>
-                            )}
-
-                            {modalEvent.price && <p><CoinsIcon size={16} /> {modalEvent.price} Kč</p>}
-                            {modalEvent.category && <p><Tag size={16} /> {modalEvent.category}</p>}
-                            {modalEvent.facebookUrl && (
-                                <p><a href={modalEvent.facebookUrl} target="_blank" rel="noreferrer">Odkaz na událost</a></p>
-                            )}
-                            <button onClick={() => setModalEvent(null)} className="close-button">Zavřít</button>
-                        </div>
-                    </div>
-                )}
+                {renderModal()}
             </div>
         </div>
     );
-};
+}

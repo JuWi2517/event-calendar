@@ -2,17 +2,11 @@
    Public Page Styles
    ========================================================================== */
 
-/* We removed the 'html, body' block from here because it was breaking the Admin page.
-   It is now handled in Global.css.
-*/
-
 .public-page {
-    /* Changed from fixed height to min-height */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 
-    /* Removed overflow-y: auto to kill the double scrollbar */
     overflow: visible;
 
     background-color: #0D1117;
@@ -20,14 +14,12 @@
 }
 
 .public-page.bg {
-    /* Inherits natural flow */
     height: auto;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* The content container */
 .page-content {
     width: min(100% - 2rem, 1200px);
     margin-inline: auto;

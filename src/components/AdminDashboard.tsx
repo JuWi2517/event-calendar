@@ -22,7 +22,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
 
-// Shared imports
 import {
     type EventWithId,
     type CollectionType,
@@ -42,7 +41,7 @@ import {
     IconPrice,
     IconTag,
     useLocationAutocomplete,
-} from '../sharedForDashboards';
+} from '../shared';
 
 registerLocale('cs', cs);
 

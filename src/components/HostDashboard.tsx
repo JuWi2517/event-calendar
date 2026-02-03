@@ -45,7 +45,7 @@ import {
     IconPrice,
     IconTag,
     useLocationAutocomplete,
-} from '../sharedForDashboards';
+} from '../shared';
 
 registerLocale('cs', cs);
 

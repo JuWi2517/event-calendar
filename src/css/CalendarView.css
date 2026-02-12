@@ -222,7 +222,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    margin-top: auto; /* Pushes meta to the bottom */
 }
 
 .event-meta p {

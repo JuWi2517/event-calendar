@@ -382,7 +382,7 @@ export default function CalendarView() {
 
                 {event.organizer && (
                     <div className="event-organizer">
-                        <User size={14} />
+                        Pořádá:
                         <span>{event.organizer}</span>
                     </div>
                 )}

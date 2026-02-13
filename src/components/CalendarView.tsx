@@ -2,7 +2,7 @@ import { useEffect, useState, forwardRef } from 'react';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Event } from '../types/Event';
-import { Clock, MapPin, Tag, Calendar, CoinsIcon } from 'lucide-react';
+import { Clock, MapPin, Tag, Calendar, CoinsIcon, User } from 'lucide-react';
 import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
@@ -68,6 +68,13 @@ function formatDateRange(startStr: string, endStr: string | undefined): string {
     const formattedEnd = endDate.toLocaleDateString('cs-CZ');
 
     return `${formattedStart} - ${formattedEnd}`;
+}
+
+function formatTimeRange(start: string, end: string | undefined): string {
+    if (!end) {
+        return start;
+    }
+    return `${start} - ${end}`;
 }
 
 function formatMonthYearKey(key: string): string {
@@ -352,7 +359,7 @@ export default function CalendarView() {
 
                     <p>
                         <Clock size={16} />
-                        {event.start}
+                        {formatTimeRange(event.start, event.end)}
                     </p>
 
                     <p>
@@ -360,12 +367,10 @@ export default function CalendarView() {
                         {event.location}
                     </p>
 
-                    {event.price && (
-                        <p>
-                            <CoinsIcon size={16} />
-                            {event.price} Kč
-                        </p>
-                    )}
+                    <p>
+                        <CoinsIcon size={16} />
+                        {event.price ? `${event.price} Kč` : 'Dobrovolné'}
+                    </p>
 
                     {event.category && (
                         <p>
@@ -374,6 +379,13 @@ export default function CalendarView() {
                         </p>
                     )}
                 </div>
+
+                {event.organizer && (
+                    <div className="event-organizer">
+                        <User size={14} />
+                        <span>{event.organizer}</span>
+                    </div>
+                )}
             </div>
         );
     }
@@ -457,20 +469,24 @@ export default function CalendarView() {
                     </p>
 
                     <p>
-                        <Clock size={16} /> Začátek: {modalEvent.start}
+                        <Clock size={16} /> Čas: {formatTimeRange(modalEvent.start, modalEvent.end)}
                     </p>
 
                     {renderLocationLink(modalEvent)}
 
-                    {modalEvent.price && (
-                        <p>
-                            <CoinsIcon size={16} /> {modalEvent.price} Kč
-                        </p>
-                    )}
+                    <p>
+                        <CoinsIcon size={16} /> {modalEvent.price ? `${modalEvent.price} Kč` : 'Dobrovolné'}
+                    </p>
 
                     {modalEvent.category && (
                         <p>
                             <Tag size={16} /> {modalEvent.category}
+                        </p>
+                    )}
+
+                    {modalEvent.organizer && (
+                        <p>
+                            <User size={16} /> Pořadatel: {modalEvent.organizer}
                         </p>
                     )}
 

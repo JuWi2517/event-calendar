@@ -5,6 +5,7 @@ export interface Event {
     startDate: string;
     endDate?: string;
     start: string;
+    end?: string;
     location: string;
     lat: number;
     lng: number;
@@ -14,4 +15,5 @@ export interface Event {
     status: 'pending' | 'approved' | 'rejected';
     posterPath: string;
     resizedPosterPath: string;
+    organizer?: string;
 }

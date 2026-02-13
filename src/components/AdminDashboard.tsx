@@ -61,6 +61,9 @@ export default function AdminDashboard() {
     const [newImage, setNewImage] = useState<File | null>(null);
     const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
 
+    // Price type state
+    const [priceType, setPriceType] = useState<'free' | 'priced'>('free');
+
     // Location autocomplete
     const {
         setLocationQuery,
@@ -112,6 +115,7 @@ export default function AdminDashboard() {
         setEditedCollection(from);
         setNewImage(null);
         setModalOpen(true);
+        setPriceType(item.price && item.price !== '' && item.price !== '0' ? 'priced' : 'free');
         resetLocationState();
     }
 
@@ -120,6 +124,7 @@ export default function AdminDashboard() {
         setEditedEvent(null);
         setEditedCollection(null);
         setNewImage(null);
+        setPriceType('free');
         resetLocationState();
     }
 
@@ -422,12 +427,31 @@ export default function AdminDashboard() {
         });
     }
 
-    function handleTimeChange(date: Date | null) {
+    function handleStartTimeChange(date: Date | null) {
         if (date) {
             const timeString = date.toTimeString().slice(0, 5);
             setField('start', timeString);
         } else {
             setField('start', '');
+        }
+    }
+
+    function handleEndTimeChange(date: Date | null) {
+        if (date) {
+            const timeString = date.toTimeString().slice(0, 5);
+            setField('end', timeString);
+        } else {
+            setField('end', '');
+        }
+    }
+
+    function handlePriceTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const newType = event.target.value as 'free' | 'priced';
+        setPriceType(newType);
+
+        // Clear price when switching to free
+        if (newType === 'free') {
+            setField('price', '');
         }
     }
 
@@ -473,7 +497,9 @@ export default function AdminDashboard() {
                         {item.start && (
                             <div className="card-row">
                                 <IconClock />
-                                <span>{item.start}</span>
+                                <span>
+                                    {item.end ? `${item.start} - ${item.end}` : item.start}
+                                </span>
                             </div>
                         )}
 
@@ -495,6 +521,14 @@ export default function AdminDashboard() {
                             <div className="card-row">
                                 <IconTag />
                                 <span>{item.category}</span>
+                            </div>
+                        )}
+
+                        {item.organizer && (
+                            <div className="card-row">
+                                <span style={{ fontSize: '0.85em', color: '#888' }}>
+                                    Pořadatel: {item.organizer}
+                                </span>
                             </div>
                         )}
                     </div>
@@ -600,16 +634,16 @@ export default function AdminDashboard() {
                                 />
                             </div>
 
-                            {/* Time */}
+                            {/* Start Time */}
                             <div className="field">
-                                <label>Čas</label>
+                                <label>Čas začátku</label>
                                 <ReactDatePicker
                                     selected={
                                         editedEvent.start
                                             ? new Date(`1970-01-01T${editedEvent.start}`)
                                             : null
                                     }
-                                    onChange={handleTimeChange}
+                                    onChange={handleStartTimeChange}
                                     showTimeSelect
                                     showTimeSelectOnly
                                     timeIntervals={5}
@@ -618,6 +652,27 @@ export default function AdminDashboard() {
                                     locale="cs"
                                     customInput={<DatePickerCustomInput placeholder="Vyberte čas" />}
                                     required
+                                    isClearable
+                                />
+                            </div>
+
+                            {/* End Time */}
+                            <div className="field">
+                                <label>Čas konce</label>
+                                <ReactDatePicker
+                                    selected={
+                                        editedEvent.end
+                                            ? new Date(`1970-01-01T${editedEvent.end}`)
+                                            : null
+                                    }
+                                    onChange={handleEndTimeChange}
+                                    showTimeSelect
+                                    showTimeSelectOnly
+                                    timeIntervals={5}
+                                    timeCaption="Čas"
+                                    dateFormat="HH:mm"
+                                    locale="cs"
+                                    customInput={<DatePickerCustomInput placeholder="Nepovinné" />}
                                     isClearable
                                 />
                             </div>
@@ -639,12 +694,37 @@ export default function AdminDashboard() {
 
                             {/* Price */}
                             <div className="field">
-                                <label>Cena</label>
-                                <input
-                                    type="number"
-                                    value={editedEvent.price || ''}
-                                    onChange={(inputEvent) => setField('price', inputEvent.target.value)}
-                                />
+                                <label>Vstupné</label>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name="priceType"
+                                            value="free"
+                                            checked={priceType === 'free'}
+                                            onChange={handlePriceTypeChange}
+                                        />
+                                        <span>Dobrovolné</span>
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name="priceType"
+                                            value="priced"
+                                            checked={priceType === 'priced'}
+                                            onChange={handlePriceTypeChange}
+                                        />
+                                        <span>Zpoplatněno</span>
+                                    </label>
+                                </div>
+                                {priceType === 'priced' && (
+                                    <input
+                                        type="number"
+                                        value={editedEvent.price || ''}
+                                        onChange={(inputEvent) => setField('price', inputEvent.target.value)}
+                                        placeholder="Cena v Kč"
+                                    />
+                                )}
                             </div>
 
                             {/* Location */}
@@ -663,6 +743,17 @@ export default function AdminDashboard() {
                                 <LocationSuggestions
                                     suggestions={locationSuggestions}
                                     onSelect={handleLocationSelect}
+                                />
+                            </div>
+
+                            {/* Organizer */}
+                            <div className="field">
+                                <label>Pořadatel</label>
+                                <input
+                                    type="text"
+                                    value={editedEvent.organizer || ''}
+                                    onChange={(inputEvent) => setField('organizer', inputEvent.target.value)}
+                                    placeholder="Kdo pořádá tuto událost?"
                                 />
                             </div>
 

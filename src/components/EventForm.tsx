@@ -38,8 +38,10 @@ interface FormState {
     startDate: Date | null;
     endDate: Date | null;
     start: string;
+    end: string;
     price: string;
     location: string;
+    organizer: string;
     facebookUrl: string;
     poster: File | null;
     lat: number;
@@ -77,8 +79,10 @@ const INITIAL_FORM_STATE: FormState = {
     startDate: null,
     endDate: null,
     start: '',
+    end: '',
     price: '',
     location: '',
+    organizer: '',
     facebookUrl: '',
     poster: null,
     lat: 0,
@@ -137,6 +141,10 @@ export default function EventForm({ onSuccess }: EventFormProps) {
     const [locationError, setLocationError] = useState(false);
     const [dateError, setDateError] = useState(false);
     const [timeError, setTimeError] = useState(false);
+    const [endTimeError, setEndTimeError] = useState(false);
+
+    // Price type state
+    const [priceType, setPriceType] = useState<'free' | 'priced'>('free');
 
     // Refs
     const dropdownRef = useRef<HTMLUListElement>(null);
@@ -159,7 +167,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         return () => unsubscribe();
     }, [auth]);
 
-    // ========================================================================
+// ========================================================================
     // Location Autocomplete
     // ========================================================================
 
@@ -180,12 +188,31 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
         async function fetchSuggestions() {
             try {
-                const requestUrl = `https://api.mapy.cz/v1/suggest/?query=${encodeURIComponent(form.location)}&lang=cs&type=poi&locality=Louny&apikey=${MAPY_API_KEY}`;
-                const response = await fetch(requestUrl, { signal: controller.signal });
-                const data = await response.json();
+                const locationParams = "&locality=BOX%2813.630415205275739%2C50.282424449893824%2C13.992872427758783%2C50.429883984497934%29%2CBOX%2813.495423078291793%2C50.21301448055726%2C14.175776259835118%2C50.489831390583106%29&preferBBox=13.495423078291793%2C50.21301448055726%2C14.175776259835118%2C50.489831390583106";
 
-                if (Array.isArray(data.items)) {
-                    const suggestionList = data.items.map((item: MapyApiItem) => ({
+                const urlPoi = `https://api.mapy.cz/v1/suggest?lang=cs&apikey=${MAPY_API_KEY}&query=${encodeURIComponent(form.location)}&limit=5&type=poi${locationParams}`;
+
+                const urlStreet = `https://api.mapy.cz/v1/suggest?lang=cs&apikey=${MAPY_API_KEY}&query=${encodeURIComponent(form.location)}&limit=5&type=regional.street${locationParams}`;
+
+                const urlAddress = `https://api.mapy.cz/v1/suggest?lang=cs&apikey=${MAPY_API_KEY}&query=${encodeURIComponent(form.location)}&limit=5&type=regional.address${locationParams}`;
+
+                const [responsePoi, responseAddress, responseStreet] = await Promise.all([
+                    fetch(urlPoi, { signal: controller.signal }),
+                    fetch(urlAddress, { signal: controller.signal }),
+                    fetch(urlStreet, { signal: controller.signal })
+                ]);
+
+                const dataPoi = await responsePoi.json();
+                const dataAddress = await responseAddress.json();
+                const dataStreet = await responseStreet.json();
+
+                const itemsPoi = Array.isArray(dataPoi.items) ? dataPoi.items : [];
+                const itemsAddress = Array.isArray(dataAddress.items) ? dataAddress.items : [];
+                const itemsStreet = Array.isArray(dataStreet.items) ? dataStreet.items : [];
+                const allItems = [...itemsPoi, ...itemsAddress, ...itemsStreet];
+
+                if (allItems.length > 0) {
+                    const suggestionList = allItems.map((item: MapyApiItem) => ({
                         name: item.name,
                         lat: item.position.lat,
                         lng: item.position.lon,
@@ -195,6 +222,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     setSuggestions([]);
                 }
             } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    return;
+                }
                 console.error('Error fetching suggestions:', error);
                 setSuggestions([]);
             }
@@ -215,6 +245,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         setLocationError(false);
         setDateError(false);
         setTimeError(false);
+        setEndTimeError(false);
+        setPriceType('free');
         setIsCompressing(false);
         setCompressionError('');
         setCreatedEventId(null);
@@ -274,13 +306,33 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         }
     }
 
-    function handleTimeChange(date: Date | null) {
+    function handleStartTimeChange(date: Date | null) {
         if (date) {
             const timeString = date.toTimeString().slice(0, 5);
             updateFormField('start', timeString);
             setTimeError(false);
         } else {
             updateFormField('start', '');
+        }
+    }
+
+    function handleEndTimeChange(date: Date | null) {
+        if (date) {
+            const timeString = date.toTimeString().slice(0, 5);
+            updateFormField('end', timeString);
+            setEndTimeError(false);
+        } else {
+            updateFormField('end', '');
+        }
+    }
+
+    function handlePriceTypeChange(event: ChangeEvent<HTMLInputElement>) {
+        const newType = event.target.value as 'free' | 'priced';
+        setPriceType(newType);
+
+        // Clear price when switching to free
+        if (newType === 'free') {
+            updateFormField('price', '');
         }
     }
 
@@ -340,6 +392,21 @@ export default function EventForm({ onSuccess }: EventFormProps) {
         if (!form.start) {
             setTimeError(true);
             hasError = true;
+        }
+
+        // Validate time range if both times are provided
+        if (form.start && form.end) {
+            const [startHours, startMinutes] = form.start.split(':').map(Number);
+            const [endHours, endMinutes] = form.end.split(':').map(Number);
+
+            const startTotalMinutes = startHours * 60 + startMinutes;
+            const endTotalMinutes = endHours * 60 + endMinutes;
+
+            if (endTotalMinutes <= startTotalMinutes) {
+                setEndTimeError(true);
+                alert('Čas konce musí být po čase začátku.');
+                hasError = true;
+            }
         }
 
         if (form.lat === 0 || form.lng === 0) {
@@ -405,8 +472,10 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 startDate: startDateString,
                 endDate: endDateString,
                 start: form.start,
+                end: form.end,
                 price: form.price,
                 location: form.location,
+                organizer: form.organizer,
                 facebookUrl: normalizedFacebookUrl,
                 posterUrl: posterUrl,
                 posterPath: posterPath,
@@ -657,18 +726,18 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     </div>
                 )}
 
-                {/* Time */}
-                <label>Čas konání: *</label>
+                {/* Start Time */}
+                <label>Čas začátku: *</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
-                    onChange={handleTimeChange}
+                    onChange={handleStartTimeChange}
                     locale="cs"
                     showTimeSelect
                     showTimeSelectOnly
                     timeIntervals={15}
                     timeCaption="Čas"
                     dateFormat="HH:mm"
-                    placeholderText="Vyberte čas"
+                    placeholderText="Vyberte čas začátku"
                     customInput={
                         <DatePickerCustomInput
                             className={`date-picker ${timeError ? 'input-error' : ''}`}
@@ -682,14 +751,64 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     </div>
                 )}
 
-                {/* Price */}
-                <label>Cena:</label>
-                <input
-                    type="number"
-                    name="price"
-                    value={form.price}
-                    onChange={handleInputChange}
+                {/* End Time */}
+                <label>Čas konce:</label>
+                <ReactDatePicker
+                    selected={form.end ? new Date(`1970-01-01T${form.end}`) : null}
+                    onChange={handleEndTimeChange}
+                    locale="cs"
+                    showTimeSelect
+                    showTimeSelectOnly
+                    timeIntervals={15}
+                    timeCaption="Čas"
+                    dateFormat="HH:mm"
+                    placeholderText="Vyberte čas konce"
+                    customInput={
+                        <DatePickerCustomInput
+                            className={`date-picker ${endTimeError ? 'input-error' : ''}`}
+                        />
+                    }
+                    isClearable
                 />
+                {endTimeError && (
+                    <div className="validation-error">
+                        <span>Čas konce musí být po čase začátku.</span>
+                    </div>
+                )}
+
+                {/* Price */}
+                <label>Vstupné:</label>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="priceType"
+                            value="free"
+                            checked={priceType === 'free'}
+                            onChange={handlePriceTypeChange}
+                        />
+                        <span>Dobrovolné</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="priceType"
+                            value="priced"
+                            checked={priceType === 'priced'}
+                            onChange={handlePriceTypeChange}
+                        />
+                        <span>Zpoplatněno</span>
+                    </label>
+                </div>
+                {priceType === 'priced' && (
+                    <input
+                        type="number"
+                        name="price"
+                        value={form.price}
+                        onChange={handleInputChange}
+                        placeholder="Cena v Kč"
+                    />
+                )}
 
                 {/* Location */}
                 <label>Místo: *</label>
@@ -707,6 +826,16 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     </div>
                 )}
                 {renderLocationSuggestions()}
+
+                {/* Organizer */}
+                <label>Pořadatel:</label>
+                <input
+                    type="text"
+                    name="organizer"
+                    value={form.organizer}
+                    onChange={handleInputChange}
+                    maxLength={60}
+                />
 
                 {/* Event URL */}
                 <label>Odkaz na událost:</label>

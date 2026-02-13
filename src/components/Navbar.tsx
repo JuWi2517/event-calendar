@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, signOut, onAuthStateChanged, type User } from "firebase/auth";
 import { checkIsAdmin } from '../utils/adminAuth';
-
+import '../css/Navbar.css';
 
 export default function Navbar() {
     const [user, setUser] = useState<User | null>(null);
-    const [isAdmin, setIsAdmin] = useState(false); // State for admin status
+    const [isAdmin, setIsAdmin] = useState(false);
     const auth = getAuth();
     const navigate = useNavigate();
 
@@ -24,38 +24,39 @@ export default function Navbar() {
     };
 
     return (
-        <nav style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '16px 24px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)',backgroundColor: 'rgba(0, 0, 0, 0.2)',
-        }}>
-            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#e7edf7' }}>
-                <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>🗓️ Kalendář</Link>
+        <nav className="navbar">
+            <div className="navbar-logo">
+                <Link to="/">🗓️ Kalendář</Link>
             </div>
 
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div className="navbar-actions">
                 {user ? (
                     <>
-                        {/* CONDITIONAL DASHBOARD BUTTON */}
                         {isAdmin ? (
                             <Link to="/admin/dashboard">
-                                <button className="btn" style={{ background: '#ff4d4f', color: '#fff' }}>
+                                <button className="btn btn-admin">
                                     Admin Panel
                                 </button>
                             </Link>
                         ) : (
                             <Link to="/moje-akce">
-                                <button className="btn" style={{ background: '#d1b15a', color: '#000' }}>
+                                <button className="btn btn-moje-akce">
                                     Moje Akce
                                 </button>
                             </Link>
                         )}
-
-                        <button onClick={handleSignOut} className="btn neutral">Odhlásit</button>
+                        <button onClick={handleSignOut} className="btn neutral">
+                            Odhlásit
+                        </button>
                     </>
                 ) : (
                     <>
-                        <Link to="/prihlaseni"><button className="btn ghost">Přihlásit</button></Link>
-                        <Link to="/registrace"><button className="btn approve">Registrace</button></Link>
+                        <Link to="/prihlaseni">
+                            <button className="btn ghost">Přihlásit</button>
+                        </Link>
+                        <Link to="/registrace">
+                            <button className="btn approve">Registrace</button>
+                        </Link>
                     </>
                 )}
             </div>

@@ -19,4 +19,7 @@ export default defineConfig({
             readable: true,
         }),
     ],
+    build: {
+        assetsInlineLimit: 6000,
+    },
 })

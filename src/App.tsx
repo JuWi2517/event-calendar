@@ -4,7 +4,7 @@ import { auth } from "./firebase";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { checkIsAdmin } from './utils/adminAuth';
 import ResetPassword from "./components/ResetPassword.tsx";
-import "./css/Global.css";
+import "css/Global.css"
 
 
 const Navbar = React.lazy(() => import("./components/Navbar"));

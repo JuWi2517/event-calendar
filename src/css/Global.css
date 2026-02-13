@@ -1,4 +1,43 @@
+/* ==========================================================================
+   1. Foundation & Global Styles
+   ========================================================================== */
 
+:root {
+    /* Main Color Palette */
+    --bg-main: #0D1117;
+    --bg-panel: #202020;
+    --bg-input: #333;
+    --bg-footer: #0a246a;
+    --border-color: #383838;
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #a0aec0;
+
+    /* Accent & Action Colors */
+    --accent-yellow: #fcc200;
+    --accent-yellow-hover: #ffd700;
+    --accent-blue: #2563eb;
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+
+    /* Sizing */
+    --radius-md: 12px;
+    --radius-sm: 8px;
+}
+
+/* --- NUCLEAR SCROLL FIX --- */
+/* This ensures ONLY the browser window scrolls */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto !important; /* Allow growing */
+    overflow-x: hidden;      /* No side scroll */
+    overflow-y: auto;        /* Browser handles scroll */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
 
 #root {
     min-height: 100vh;

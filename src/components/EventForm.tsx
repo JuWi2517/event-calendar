@@ -658,7 +658,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 )}
 
                 {/* Time */}
-                <label>Začátek: *</label>
+                <label>Čas konání: *</label>
                 <ReactDatePicker
                     selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
                     onChange={handleTimeChange}

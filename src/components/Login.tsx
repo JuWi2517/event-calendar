@@ -6,12 +6,13 @@ import {
     GoogleAuthProvider
 } from "firebase/auth";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore'; // Přidáno setDoc, serverTimestamp
+import { getToken } from 'firebase/messaging'; // Přidáno
+import { db, messaging } from '../firebase'; // Přidáno messaging
 import { checkIsAdmin } from '../utils/adminAuth';
 import '../css/Auth.css';
 
-// --- Google Icon Component ---
+
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -42,6 +43,30 @@ export default function Login() {
         };
     }, []);
 
+    // Pomocná funkce pro registraci notifikací (aby se kód neopakoval)
+    const registerAdminNotifications = async (user: any) => {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                // ZDE VLOŽ SVŮJ VAPID KLÍČ Z FIREBASE CONSOLE
+                console.log(messaging)
+                const token = await getToken(messaging, {
+                        vapidKey: import.meta.env.VITE_VAPID_KEY
+                });
+
+                if (token && user.email) {
+                    await setDoc(doc(db, "admin_tokens", user.email), {
+                        token: token,
+                        uid: user.uid,
+                        lastLogin: serverTimestamp()
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn("Chyba při nastavování notifikací (neblokuje přihlášení):", err);
+        }
+    };
+
     const handleClaimEvent = async (uid: string) => {
         const claimId = location.state?.claimEventId;
         if (claimId) {
@@ -64,6 +89,9 @@ export default function Login() {
             await handleClaimEvent(userCredential.user.uid);
 
             if (checkIsAdmin(userCredential.user)) {
+                // NOVÉ: Registrace notifikací pro email/heslo
+                await registerAdminNotifications(userCredential.user);
+
                 navigate('/admin/dashboard');
             } else {
                 navigate('/moje-akce');
@@ -76,15 +104,18 @@ export default function Login() {
     const handleGoogleLogin = async () => {
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-
             provider.setCustomParameters({
                 prompt: 'select_account'
             });
 
+            const result = await signInWithPopup(auth, provider);
+
             await handleClaimEvent(result.user.uid);
 
             if (checkIsAdmin(result.user)) {
+                // NOVÉ: Registrace notifikací pro Google login
+                await registerAdminNotifications(result.user);
+
                 navigate('/admin/dashboard');
             } else {
                 navigate('/moje-akce');

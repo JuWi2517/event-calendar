@@ -23,7 +23,7 @@ export default function PublicPage() {
             <PhotoCarousel
                 images={carouselImages}
                 title="Kalendář akcí v Lounech"
-                subtitle="Kulturní a společenské události v Lounech"
+                subtitle="PlanujLouny je koordinační kalendář akcí v Lounech určený především organizátorům akcí v Lounech. Jeho cílem je přehledné plánování, omezení kolizí termínů a lepší vzájemná domluva mezi pořadateli. "
             />
 
             <main className="page-content">

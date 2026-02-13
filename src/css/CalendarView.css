@@ -1,12 +1,7 @@
-/*
- * =============================================
- * MODERN DESIGN FOR CALENDAR VIEW COMPONENT
- * =============================================
- */
+
 
 /* --- 1. Variables and Global Styles --- */
 :root {
-    /* --- New High-Contrast Palette --- */
 
     /* Backgrounds: Dark charcoal/slate greys for clear separation */
     --bg-primary: #020024;      /* Your original page background */

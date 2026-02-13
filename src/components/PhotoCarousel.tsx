@@ -22,7 +22,6 @@ export default function PhotoCarousel({
     const timerRef = useRef<number | null>(null);
     const safeImages = useMemo(() => images.filter(Boolean), [images]);
 
-    // Endless autoplay, no hover pause, no controls
     useEffect(() => {
         if (safeImages.length <= 1) return;
         timerRef.current && clearInterval(timerRef.current);

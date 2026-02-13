@@ -7,12 +7,14 @@ export const FB_RESOLVER_ENDPOINT =
 
 export const CATEGORY_OPTIONS = [
     { value: '', label: 'Všechny kategorie' },
-    { value: 'koncert', label: 'Koncerty' },
-    { value: 'sport', label: 'Sport' },
-    { value: 'pro děti', label: 'Pro děti' },
-    { value: 'divadlo', label: 'Divadlo' },
-    { value: 'kino', label: 'Kino' },
-    { value: 'výstava', label: 'Výstavy' },
-    { value: 'přednáška', label: 'Přednášky' },
-    { value: 'slavnost', label: 'Slavnosti' },
+    { value: 'Koncert', label: 'Koncerty' },
+    { value: 'Sport/Turistika', label: 'Sport/Turistika' },
+    { value: 'Pro děti', label: 'Pro děti' },
+    { value: 'Divadlo', label: 'Divadlo' },
+    { value: 'Kino', label: 'Kino' },
+    { value: 'Výstavy', label: 'Výstavy' },
+    { value: 'Přednášky', label: 'Přednášky' },
+    { value: 'Slavnosti', label: 'Slavnosti' },
+    { value: 'Ostatní',label: 'Ostatní'},
+
 ];

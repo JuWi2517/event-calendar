@@ -19,6 +19,8 @@ export default function Footer() {
                 >
                     Ivana Petřivalská
                 </a>
+                    <span className="separator">•</span>
+                    Správce: Eva Hájková
                 </p>
             </div>
         </section>

@@ -22,7 +22,6 @@ import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
-import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
 
 // Shared imports
@@ -54,6 +53,12 @@ registerLocale('cs', cs);
 // ============================================================================
 
 export default function HostDashboard() {
+
+    useEffect(() => {
+        import('../css/AdminDashboard.css');
+    }, []);
+
+
     // Auth state
     const [user, setUser] = useState<User | null>(null);
 

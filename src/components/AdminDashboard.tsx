@@ -19,7 +19,6 @@ import ReactDatePicker from 'react-datepicker';
 import { registerLocale } from 'react-datepicker';
 import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
-import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
 
 import {
@@ -50,6 +49,11 @@ registerLocale('cs', cs);
 // ============================================================================
 
 export default function AdminDashboard() {
+
+    useEffect(() => {
+        import('../css/AdminDashboard.css');
+    }, []);
+
     // State for event lists
     const [pending, setPending] = useState<EventWithId[]>([]);
     const [approved, setApproved] = useState<EventWithId[]>([]);

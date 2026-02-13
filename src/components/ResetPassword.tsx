@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // <--- Tady přidán useEffect
+import React, { useState, useEffect } from 'react';
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { Link } from 'react-router-dom';
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, signOut, onAuthStateChanged, type User } from "firebase/auth";
-import { checkIsAdmin } from '../utils/adminAuth'; // Import the helper
+import { checkIsAdmin } from '../utils/adminAuth';
 
 
 export default function Navbar() {
@@ -28,7 +28,7 @@ export default function Navbar() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             padding: '16px 24px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)',backgroundColor: 'rgba(0, 0, 0, 0.2)',
         }}>
-            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
+            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#e7edf7' }}>
                 <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>🗓️ Kalendář</Link>
             </div>
 
@@ -38,13 +38,13 @@ export default function Navbar() {
                         {/* CONDITIONAL DASHBOARD BUTTON */}
                         {isAdmin ? (
                             <Link to="/admin/dashboard">
-                                <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }}>
+                                <button className="btn" style={{ background: '#ff4d4f', color: '#fff' }}>
                                     Admin Panel
                                 </button>
                             </Link>
                         ) : (
                             <Link to="/moje-akce">
-                                <button className="btn" style={{ background: 'var(--accent)', color: '#000' }}>
+                                <button className="btn" style={{ background: '#d1b15a', color: '#000' }}>
                                     Moje Akce
                                 </button>
                             </Link>

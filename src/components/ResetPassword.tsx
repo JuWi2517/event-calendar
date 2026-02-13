@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'; // <--- Tady přidán useEffect
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 import { Link } from 'react-router-dom';
-import '../css/AdminDashboard.css';
 
 export default function ResetPassword() {
     const [email, setEmail] = useState('');

@@ -32,16 +32,39 @@ export function useLocationAutocomplete(): UseLocationAutocompleteResult {
             }
 
             try {
-                const requestUrl = `https://api.mapy.cz/v1/suggest/?query=${encodeURIComponent(locationQuery)}&lang=cs&type=poi&locality=Louny&apikey=${MAPY_API_KEY}`;
-                const response = await fetch(requestUrl, { signal: controller.signal });
-                const data = await response.json();
+                const locationParams = "&locality=BOX%2813.630415205275739%2C50.282424449893824%2C13.992872427758783%2C50.429883984497934%29%2CBOX%2813.495423078291793%2C50.21301448055726%2C14.175776259835118%2C50.489831390583106%29&preferBBox=13.495423078291793%2C50.21301448055726%2C14.175776259835118%2C50.489831390583106";
 
-                if (Array.isArray(data?.items)) {
-                    setLocationSuggestions(data.items);
+                const urlPoi = `https://api.mapy.cz/v1/suggest?lang=cs&apikey=${MAPY_API_KEY}&query=${encodeURIComponent(locationQuery)}&limit=5&type=poi${locationParams}`;
+
+                const urlStreet = `https://api.mapy.cz/v1/suggest?lang=cs&apikey=${MAPY_API_KEY}&query=${encodeURIComponent(locationQuery)}&limit=5&type=regional.street${locationParams}`;
+
+                const urlAddress = `https://api.mapy.cz/v1/suggest?lang=cs&apikey=${MAPY_API_KEY}&query=${encodeURIComponent(locationQuery)}&limit=5&type=regional.address${locationParams}`;
+
+                const [responsePoi, responseAddress, responseStreet] = await Promise.all([
+                    fetch(urlPoi, { signal: controller.signal }),
+                    fetch(urlAddress, { signal: controller.signal }),
+                    fetch(urlStreet, { signal: controller.signal })
+                ]);
+
+                const dataPoi = await responsePoi.json();
+                const dataAddress = await responseAddress.json();
+                const dataStreet = await responseStreet.json();
+
+                const itemsPoi = Array.isArray(dataPoi.items) ? dataPoi.items : [];
+                const itemsAddress = Array.isArray(dataAddress.items) ? dataAddress.items : [];
+                const itemsStreet = Array.isArray(dataStreet.items) ? dataStreet.items : [];
+                const allItems = [...itemsPoi, ...itemsAddress, ...itemsStreet];
+
+                if (allItems.length > 0) {
+                    setLocationSuggestions(allItems);
                 } else {
                     setLocationSuggestions([]);
                 }
-            } catch {
+            } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    return;
+                }
+                console.error('Error fetching suggestions:', error);
                 setLocationSuggestions([]);
             }
         }

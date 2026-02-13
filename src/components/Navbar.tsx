@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, signOut, onAuthStateChanged, type User } from "firebase/auth";
 import { checkIsAdmin } from '../utils/adminAuth'; // Import the helper
-import '../css/AdminDashboard.css';
+
 
 export default function Navbar() {
     const [user, setUser] = useState<User | null>(null);

@@ -48,16 +48,16 @@ export default function Login() {
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                // ZDE VLOŽ SVŮJ VAPID KLÍČ Z FIREBASE CONSOLE
-                console.log(messaging)
                 const token = await getToken(messaging, {
                         vapidKey: import.meta.env.VITE_VAPID_KEY
                 });
 
                 if (token && user.email) {
-                    await setDoc(doc(db, "admin_tokens", user.email), {
+                    await setDoc(doc(db, "admin_tokens", token), {
                         token: token,
+                        email: user.email,
                         uid: user.uid,
+                        device: navigator.userAgent,
                         lastLogin: serverTimestamp()
                     });
                 }

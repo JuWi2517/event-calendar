@@ -4,7 +4,7 @@ import { auth } from "./firebase";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { checkIsAdmin } from './utils/adminAuth';
 import ResetPassword from "./components/ResetPassword.tsx";
-import "./css/Global.css"
+
 
 
 const Navbar = React.lazy(() => import("./components/Navbar"));
@@ -18,6 +18,8 @@ const PrivacyPolicy = React.lazy(() =>import("./components/PrivacyPolicy.tsx"));
 
 // 1. GENERIC PRIVATE ROUTE (For Hosts)
 function PrivateRoute({ children }: { children: React.ReactElement }) {
+
+
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
 
@@ -56,6 +58,9 @@ function AdminRoute({ children }: { children: React.ReactElement }) {
 }
 
 export default function App() {
+    useEffect(() => {
+        import("./css/Global.css");
+    }, []);
     return (
         <BrowserRouter>
             <Suspense fallback={<div>Načítám...</div>}>

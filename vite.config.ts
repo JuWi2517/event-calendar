@@ -17,6 +17,7 @@ export default defineConfig({
             ],
             exclude: ['/moje-akce', '/admin/dashboard'],
             readable: true,
+            generateRobotsTxt: false,
         }),
     ],
 })

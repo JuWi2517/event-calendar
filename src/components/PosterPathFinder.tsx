@@ -19,6 +19,7 @@ export default function PosterPathFinder({ path, alt, className, fallbackPath, l
             setIsLoading(false);
             return;
         }
+        if (!path || url) return;
 
         let isMounted = true;
         const imageRef = ref(storage, path);

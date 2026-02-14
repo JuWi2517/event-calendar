@@ -404,7 +404,6 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
             if (endTotalMinutes <= startTotalMinutes) {
                 setEndTimeError(true);
-                alert('Čas konce musí být po čase začátku.');
                 hasError = true;
             }
         }

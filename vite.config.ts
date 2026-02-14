@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import Sitemap from 'vite-plugin-sitemap'
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js'
 
 export default defineConfig({
     base: '/',
     plugins: [
+        cssInjectedByJsPlugin(),
         react(),
         Sitemap({
             hostname: 'https://www.planujlouny.cz',

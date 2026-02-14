@@ -42,7 +42,7 @@ export function getResizedImagePath(originalPath: string): string {
         return '';
     }
 
-    const suffix = '_750x1080.webp';
+    const suffix = '_640x853.webp';
     const lastDotIndex = originalPath.lastIndexOf('.');
 
     if (lastDotIndex === -1) {

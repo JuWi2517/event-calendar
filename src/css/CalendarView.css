@@ -196,6 +196,7 @@
     aspect-ratio: 3 / 4;
     object-fit: cover;
     display: block;
+    border-radius: var(--radius-sm);
 }
 
 .event-header {
@@ -230,7 +231,6 @@
     flex-shrink: 0;
 }
 
-/* --- Organizer Badge --- */
 .event-organizer {
     position: absolute;
     bottom: 0.75rem;

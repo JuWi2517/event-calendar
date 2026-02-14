@@ -5,6 +5,9 @@ import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js'
 
 export default defineConfig({
     base: '/',
+    build:{
+        sourcemap: true,
+    },
     plugins: [
         cssInjectedByJsPlugin(),
         react(),

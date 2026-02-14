@@ -1,9 +1,7 @@
 import { forwardRef } from 'react';
 import type { DatePickerInputProps } from './dashboardTypes';
 
-// ============================================================================
-// Custom Date Picker Input (styled as button to match form inputs)
-// ============================================================================
+
 
 export const DatePickerCustomInput = forwardRef<HTMLButtonElement, DatePickerInputProps>(
     function DatePickerCustomInput({ value, onClick, placeholder, className }, ref) {

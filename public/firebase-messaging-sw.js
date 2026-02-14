@@ -1,4 +1,3 @@
-
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
@@ -14,20 +13,18 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('Přijata zpráva na pozadí:', payload);
 
-    const notificationTitle = payload.notification.title;
+    const { title, body, url } = payload.data;
+
     const notificationOptions = {
-        body: payload.notification.body,
+        body: body,
         icon: '/favicon.svg',
         tag: 'admin-notification-tag',
         renotify: true,
-        data: {
-            url: '/admin/dashboard'
-        }
+        data: { url: url || '/admin/dashboard' }
     };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    self.registration.showNotification(title, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {

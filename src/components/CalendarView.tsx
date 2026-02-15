@@ -158,6 +158,36 @@ const DatePickerCustomInput = forwardRef<HTMLButtonElement, DatePickerInputProps
     }
 );
 
+function EventCardSkeleton() {
+    return (
+        <div className="event-card skeleton-card">
+            <div className="event-header">
+                <div className="skeleton-block skeleton-poster" />
+                <div className="skeleton-block skeleton-title" />
+            </div>
+            <div className="event-meta">
+                <div className="skeleton-block skeleton-line" />
+                <div className="skeleton-block skeleton-line" />
+                <div className="skeleton-block skeleton-line-short" />
+            </div>
+        </div>
+    );
+}
+
+function SkeletonGrid() {
+    return (
+        <div className="month-group">
+            <div className="skeleton-block skeleton-month-title" />
+            <div className="events-grid">
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+                <EventCardSkeleton />
+            </div>
+        </div>
+    );
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -165,6 +195,7 @@ const DatePickerCustomInput = forwardRef<HTMLButtonElement, DatePickerInputProps
 export default function CalendarView() {
     // Data state
     const [eventsByMonth, setEventsByMonth] = useState<EventsByMonth>({});
+    const [loading, setLoading] = useState(true);
 
     // Filter state
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -202,6 +233,7 @@ export default function CalendarView() {
 
             const grouped = groupEventsByMonth(events);
             setEventsByMonth(grouped);
+            setLoading(false);
         }
 
         void loadEvents();
@@ -521,7 +553,14 @@ export default function CalendarView() {
             <div className="cv-container">
                 {renderFilterBar()}
 
-                {sortedMonthKeys.map((monthKey) => renderMonthGroup(monthKey))}
+                {loading ? (
+                    <>
+                        <SkeletonGrid />
+                        <SkeletonGrid />
+                    </>
+                ) : (
+                    sortedMonthKeys.map((monthKey) => renderMonthGroup(monthKey))
+                )}
 
                 {renderModal()}
             </div>

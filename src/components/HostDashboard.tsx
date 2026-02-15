@@ -15,7 +15,9 @@ import {
     getDownloadURL,
     deleteObject,
 } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { db, app } from '../firebase';
+import { getStorage } from 'firebase/storage';
+const storage = getStorage(app);
 import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import type { Event } from '../types/Event';
 import ReactDatePicker from 'react-datepicker';

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, forwardRef, type ChangeEvent, type FormEvent } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
-import { db, storage } from '../firebase';
+import { db, app } from '../firebase';
+import { getStorage } from 'firebase/storage';
+const storage = getStorage(app);
 import type { Event } from '../types/Event';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ReactDatePicker from 'react-datepicker';

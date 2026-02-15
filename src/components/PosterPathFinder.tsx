@@ -1,5 +1,7 @@
 import  { useState, useEffect } from 'react';
-import { storage } from '../firebase';
+import { app } from '../firebase.ts'
+import { getStorage } from 'firebase/storage';
+const storage = getStorage(app);
 import { ref, getDownloadURL } from 'firebase/storage';
 
 interface Props {

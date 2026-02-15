@@ -6,9 +6,8 @@ import {
     GoogleAuthProvider
 } from "firebase/auth";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore'; // Přidáno setDoc, serverTimestamp
-import { getToken } from 'firebase/messaging'; // Přidáno
-import { db, messaging } from '../firebase'; // Přidáno messaging
+import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, app } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
 import '../css/Auth.css';
 
@@ -48,8 +47,12 @@ export default function Login() {
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
+                const { getMessaging } = await import('firebase/messaging');
+                const { getToken } = await import('firebase/messaging');
+                const messaging = getMessaging(app);
+
                 const token = await getToken(messaging, {
-                        vapidKey: import.meta.env.VITE_VAPID_KEY
+                    vapidKey: import.meta.env.VITE_VAPID_KEY
                 });
 
                 if (token && user.email) {

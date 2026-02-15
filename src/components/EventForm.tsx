@@ -94,7 +94,6 @@ const INITIAL_FORM_STATE: FormState = {
 const IMAGE_COMPRESSION_OPTIONS = {
     maxSizeMB: 1,
     maxWidthOrHeight: 1920,
-    useWebP: true,
     initialQuality: 0.9,
 };
 

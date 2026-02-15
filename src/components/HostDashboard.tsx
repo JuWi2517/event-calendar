@@ -26,6 +26,7 @@ import { cs } from 'date-fns/locale/cs';
 import 'react-datepicker/dist/react-datepicker.css';
 import '../css/AdminDashboard.css';
 import EventForm from './EventForm';
+import imageCompression from 'browser-image-compression';
 
 // Shared imports
 import {
@@ -70,6 +71,10 @@ export default function HostDashboard() {
     const [editedCollection, setEditedCollection] = useState<CollectionType | null>(null);
     const [newImage, setNewImage] = useState<File | null>(null);
     const [fullScreenImageUrl, setFullScreenImageUrl] = useState<string | null>(null);
+
+    // Save & compression state
+    const [isSaving, setIsSaving] = useState(false);
+    const [isCompressing, setIsCompressing] = useState(false);
 
     // Price type state
     const [priceType, setPriceType] = useState<'free' | 'priced'>('free');
@@ -221,104 +226,115 @@ export default function HostDashboard() {
     }
 
     async function saveChanges() {
-        if (!editedEvent || !editedCollection) {
+        if (!editedEvent || !editedCollection || isSaving || isCompressing) {
             return;
         }
 
-        // Create a copy of the event to save
-        const eventToSave: EventWithId = { ...editedEvent };
+        setIsSaving(true);
 
-        // Validate required fields
-        const missingFields: string[] = [];
+        try {
+            // Create a copy of the event to save
+            const eventToSave: EventWithId = { ...editedEvent };
 
-        if (!eventToSave.title?.trim()) {
-            missingFields.push('Název');
-        }
+            // Validate required fields
+            const missingFields: string[] = [];
 
-        if (!eventToSave.location?.trim()) {
-            missingFields.push('Místo');
-        } else if (eventToSave.lat === 0 || eventToSave.lng === 0) {
-            setLocationError(true);
-            return;
-        }
+            if (!eventToSave.title?.trim()) {
+                missingFields.push('Název');
+            }
 
-        if (!eventToSave.startDate) {
-            missingFields.push('Datum');
-        }
+            if (!eventToSave.location?.trim()) {
+                missingFields.push('Místo');
+            } else if (eventToSave.lat === 0 || eventToSave.lng === 0) {
+                setLocationError(true);
+                setIsSaving(false);
+                return;
+            }
 
-        if (missingFields.length > 0) {
-            alert('Není vyplněno povinné pole: ' + missingFields.join(', '));
-            return;
-        }
+            if (!eventToSave.startDate) {
+                missingFields.push('Datum');
+            }
 
-        // Normalize Facebook URL if present
-        if (eventToSave.facebookUrl) {
-            eventToSave.facebookUrl = await normalizeFacebookUrl(eventToSave.facebookUrl);
-        }
+            if (missingFields.length > 0) {
+                alert('Není vyplněno povinné pole: ' + missingFields.join(', '));
+                setIsSaving(false);
+                return;
+            }
 
-        // Handle new image upload
-        if (newImage) {
-            // Delete old poster first
-            await deletePoster(eventToSave);
+            // Normalize Facebook URL if present
+            if (eventToSave.facebookUrl) {
+                eventToSave.facebookUrl = await normalizeFacebookUrl(eventToSave.facebookUrl);
+            }
 
-            // Upload new poster
-            const newPath = `posters/${Date.now()}_${newImage.name}`;
-            const newRef = ref(storage, newPath);
-            await uploadBytes(newRef, newImage);
+            // Handle new image upload
+            if (newImage) {
+                // Delete old poster first
+                await deletePoster(eventToSave);
 
-            // Update event with new poster info
-            eventToSave.posterUrl = await getDownloadURL(newRef);
-            (eventToSave as EventWithPosterPath).posterPath = newPath;
-            (eventToSave as EventWithPosterPath).resizedPosterPath = getResizedImagePath(newPath);
-        }
+                // Upload new poster
+                const newPath = `posters/${Date.now()}_${newImage.name}`;
+                const newRef = ref(storage, newPath);
+                await uploadBytes(newRef, newImage);
 
-        // Get payload without id
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id: _unusedId, ...payload } = eventToSave;
+                // Update event with new poster info
+                eventToSave.posterUrl = await getDownloadURL(newRef);
+                (eventToSave as EventWithPosterPath).posterPath = newPath;
+                (eventToSave as EventWithPosterPath).resizedPosterPath = getResizedImagePath(newPath);
+            }
 
-        // If editing a PUBLIC event -> Move back to submissions for re-approval
-        if (editedCollection === 'events') {
-            const newPayload = {
-                ...payload,
-                status: 'pending',
-            };
+            // Get payload without id
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id: _unusedId, ...payload } = eventToSave;
 
-            // Create new document in submissions
-            const docRef = await addDoc(collection(db, 'submissions'), newPayload);
+            // If editing a PUBLIC event -> Move back to submissions for re-approval
+            if (editedCollection === 'events') {
+                const newPayload = {
+                    ...payload,
+                    status: 'pending',
+                };
 
-            // Delete original from events
-            await deleteDoc(doc(db, 'events', eventToSave.id));
+                // Create new document in submissions
+                const docRef = await addDoc(collection(db, 'submissions'), newPayload);
 
-            // Update UI - remove from approved, add to pending
-            setApproved((currentApprovedList) => {
-                return currentApprovedList.filter((event) => event.id !== eventToSave.id);
-            });
+                // Delete original from events
+                await deleteDoc(doc(db, 'events', eventToSave.id));
 
-            setPending((currentPendingList) => {
-                const newEvent = {
-                    ...newPayload,
-                    id: docRef.id,
-                } as EventWithId;
-                return [newEvent, ...currentPendingList];
-            });
-
-            alert('Změna uložena. Událost byla přesunuta zpět ke schválení.');
-        }
-        // If editing a PENDING submission -> Just update it
-        else {
-            await updateDoc(doc(db, 'submissions', eventToSave.id), payload);
-
-            setPending((currentPendingList) => {
-                return currentPendingList.map((event) => {
-                    if (event.id === eventToSave.id) {
-                        return eventToSave;
-                    }
-                    return event;
+                // Update UI - remove from approved, add to pending
+                setApproved((currentApprovedList) => {
+                    return currentApprovedList.filter((event) => event.id !== eventToSave.id);
                 });
-            });
-        }
 
-        closeModal();
+                setPending((currentPendingList) => {
+                    const newEvent = {
+                        ...newPayload,
+                        id: docRef.id,
+                    } as EventWithId;
+                    return [newEvent, ...currentPendingList];
+                });
+
+                alert('Změna uložena. Událost byla přesunuta zpět ke schválení.');
+            }
+            // If editing a PENDING submission -> Just update it
+            else {
+                await updateDoc(doc(db, 'submissions', eventToSave.id), payload);
+
+                setPending((currentPendingList) => {
+                    return currentPendingList.map((event) => {
+                        if (event.id === eventToSave.id) {
+                            return eventToSave;
+                        }
+                        return event;
+                    });
+                });
+            }
+
+            closeModal();
+        } catch (error) {
+            console.error('Save failed:', error);
+            alert('Uložení selhalo.');
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     // ========================================================================
@@ -743,17 +759,40 @@ export default function HostDashboard() {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(inputEvent) => {
+                                    disabled={isCompressing}
+                                    onChange={async (inputEvent) => {
                                         const file = inputEvent.target.files?.[0] ?? null;
-                                        setNewImage(file);
+                                        if (!file) return;
+                                        setIsCompressing(true);
+                                        try {
+                                            const compressed = await imageCompression(file, {
+                                                maxSizeMB: 1,
+                                                maxWidthOrHeight: 1920,
+                                                initialQuality: 0.9,
+                                            });
+                                            setNewImage(compressed);
+                                        } catch (error) {
+                                            console.error('Compression failed:', error);
+                                        } finally {
+                                            setIsCompressing(false);
+                                        }
                                     }}
                                 />
+                                {isCompressing && (
+                                    <p style={{ color: 'var(--muted)', fontSize: '0.9em', marginTop: '4px' }}>
+                                        Probíhá komprese obrázku...
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         <div className="modal-actions">
-                            <button className="btn save" onClick={() => void saveChanges()}>
-                                Uložit změny
+                            <button
+                                className="btn save"
+                                onClick={() => void saveChanges()}
+                                disabled={isSaving || isCompressing}
+                            >
+                                {isSaving ? 'Ukládám...' : 'Uložit změny'}
                             </button>
                             <button className="btn ghost" onClick={closeModal}>
                                 Zavřít

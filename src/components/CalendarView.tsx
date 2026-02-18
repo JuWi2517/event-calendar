@@ -52,6 +52,11 @@ const MONTH_NAMES = [
 // Helper Functions
 // ============================================================================
 
+function getDayOfWeek(dateStr: string): string {
+    const DAYS = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+    return DAYS[new Date(dateStr).getDay()];
+}
+
 function formatDateRange(startStr: string, endStr: string | undefined): string {
     if (!startStr) {
         return 'Datum nespecifikováno';
@@ -59,15 +64,17 @@ function formatDateRange(startStr: string, endStr: string | undefined): string {
 
     const startDate = new Date(startStr);
     const formattedStart = startDate.toLocaleDateString('cs-CZ');
+    const dayName = getDayOfWeek(startStr);
 
     if (!endStr || startStr === endStr) {
-        return formattedStart;
+        return `${dayName} ${formattedStart}`;
     }
 
     const endDate = new Date(endStr);
     const formattedEnd = endDate.toLocaleDateString('cs-CZ');
+    const endDayName = getDayOfWeek(endStr);
 
-    return `${formattedStart} - ${formattedEnd}`;
+    return `${dayName} ${formattedStart} - ${endDayName} ${formattedEnd}`;
 }
 
 function formatTimeRange(start: string, end: string | undefined): string {

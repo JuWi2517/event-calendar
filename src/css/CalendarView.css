@@ -261,7 +261,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 150px;
+    max-width: 130px;
 }
 
 .event-card:hover .event-organizer {
@@ -404,17 +404,6 @@
     height: 28px;
     margin-bottom: 16px;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 /* --- 6. Animations --- */
 @keyframes fadeIn {

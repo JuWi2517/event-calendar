@@ -776,6 +776,23 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     </div>
                 )}
 
+                {/* Location */}
+                <label>Místo: *</label>
+                <input
+                    name="location"
+                    value={form.location}
+                    onChange={handleInputChange}
+                    autoComplete="off"
+                    required
+                    className={locationError ? 'input-error' : ''}
+                />
+                {locationError && (
+                    <div className="validation-error">
+                        <span>Prosím vyberte konkrétní místo z nabídky.</span>
+                    </div>
+                )}
+                {renderLocationSuggestions()}
+
                 {/* Price */}
                 <label>Vstupné:</label>
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
@@ -809,23 +826,6 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                         placeholder="Cena v Kč"
                     />
                 )}
-
-                {/* Location */}
-                <label>Místo: *</label>
-                <input
-                    name="location"
-                    value={form.location}
-                    onChange={handleInputChange}
-                    autoComplete="off"
-                    required
-                    className={locationError ? 'input-error' : ''}
-                />
-                {locationError && (
-                    <div className="validation-error">
-                        <span>Prosím vyberte konkrétní místo z nabídky.</span>
-                    </div>
-                )}
-                {renderLocationSuggestions()}
 
                 {/* Organizer */}
                 <label>Pořadatel:</label>

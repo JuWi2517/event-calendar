@@ -6,6 +6,8 @@ import {
     doc,
     getDocs,
     updateDoc,
+    setDoc,
+    serverTimestamp,
 } from 'firebase/firestore';
 import {
     ref,
@@ -579,6 +581,54 @@ export default function AdminDashboard() {
     return (
         <div className="admin-page">
             <h2 className="admin-title">Správa událostí</h2>
+
+<button
+    style={{ marginBottom: '1rem', padding: '10px 20px', background: '#4285F4', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+    onClick={async () => {
+        try {
+            if (!('Notification' in window)) {
+                alert("DEBUG: Notification API not available");
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
+            alert("DEBUG: Permission = " + permission);
+
+            if (permission !== 'granted') return;
+
+            const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            await navigator.serviceWorker.ready;
+            alert("DEBUG: Service Worker ready");
+
+            const { getMessaging, getToken } = await import('firebase/messaging');
+            const messaging = getMessaging(app);
+
+            const token = await getToken(messaging, {
+                vapidKey: import.meta.env.VITE_VAPID_KEY,
+                serviceWorkerRegistration: swRegistration
+            });
+
+            alert("DEBUG: Token = " + (token ? token.substring(0, 20) + "..." : "NULL"));
+
+            if (token) {
+                const auth = (await import('firebase/auth')).getAuth();
+                const user = auth.currentUser;
+                await setDoc(doc(db, "admin_tokens", token), {
+                    token: token,
+                    email: user?.email || 'unknown',
+                    uid: user?.uid || 'unknown',
+                    device: navigator.userAgent,
+                    lastLogin: serverTimestamp()
+                });
+                alert("DEBUG: Saved to Firestore!");
+            }
+        } catch (err: any) {
+            alert("DEBUG ERROR: " + err.message);
+        }
+    }}
+>
+    Povolit notifikace
+</button>
 
             {/* Pending Submissions */}
             <section className="admin-section">

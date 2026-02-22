@@ -44,31 +44,50 @@ export default function Login() {
 
     // Pomocná funkce pro registraci notifikací (aby se kód neopakoval)
     const registerAdminNotifications = async (user: any) => {
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const { getMessaging } = await import('firebase/messaging');
-                const { getToken } = await import('firebase/messaging');
-                const messaging = getMessaging(app);
-
-                const token = await getToken(messaging, {
-                    vapidKey: import.meta.env.VITE_VAPID_KEY
-                });
-
-                if (token && user.email) {
-                    await setDoc(doc(db, "admin_tokens", token), {
-                        token: token,
-                        email: user.email,
-                        uid: user.uid,
-                        device: navigator.userAgent,
-                        lastLogin: serverTimestamp()
-                    });
-                }
-            }
-        } catch (err) {
-            console.warn("Chyba při nastavování notifikací (neblokuje přihlášení):", err);
+    try {
+        if (!('Notification' in window)) {
+            console.warn("Notification API not available");
+            return;
         }
-    };
+
+        console.log("1. Requesting permission...");
+        const permission = await Notification.requestPermission();
+        console.log("2. Permission result:", permission);
+
+        if (permission !== 'granted') return;
+
+        console.log("3. Registering service worker...");
+        const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        await navigator.serviceWorker.ready;
+        console.log("4. Service worker ready");
+
+        const { getMessaging, getToken } = await import('firebase/messaging');
+        const messaging = getMessaging(app);
+
+        console.log("5. Getting FCM token...");
+        const token = await getToken(messaging, {
+            vapidKey: import.meta.env.VITE_VAPID_KEY,
+            serviceWorkerRegistration: swRegistration  // THIS is the key fix
+        });
+
+        console.log("6. Token received:", token);
+
+        if (token && user.email) {
+            await setDoc(doc(db, "admin_tokens", token), {
+                token: token,
+                email: user.email,
+                uid: user.uid,
+                device: navigator.userAgent,
+                lastLogin: serverTimestamp()
+            });
+            console.log("7. Token saved to Firestore!");
+        } else {
+            console.warn("No token received or no email");
+        }
+    } catch (err) {
+        console.error("FULL notification error:", err);
+    }
+};
 
     const handleClaimEvent = async (uid: string) => {
         const claimId = location.state?.claimEventId;

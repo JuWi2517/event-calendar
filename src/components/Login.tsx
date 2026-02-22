@@ -46,31 +46,28 @@ export default function Login() {
     const registerAdminNotifications = async (user: any) => {
     try {
         if (!('Notification' in window)) {
-            console.warn("Notification API not available");
+            alert("DEBUG: Notification API not available");
             return;
         }
 
-        console.log("1. Requesting permission...");
         const permission = await Notification.requestPermission();
-        console.log("2. Permission result:", permission);
+        alert("DEBUG: Permission = " + permission);
 
         if (permission !== 'granted') return;
 
-        console.log("3. Registering service worker...");
         const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         await navigator.serviceWorker.ready;
-        console.log("4. Service worker ready");
+        alert("DEBUG: Service Worker ready");
 
         const { getMessaging, getToken } = await import('firebase/messaging');
         const messaging = getMessaging(app);
 
-        console.log("5. Getting FCM token...");
         const token = await getToken(messaging, {
             vapidKey: import.meta.env.VITE_VAPID_KEY,
-            serviceWorkerRegistration: swRegistration  // THIS is the key fix
+            serviceWorkerRegistration: swRegistration
         });
 
-        console.log("6. Token received:", token);
+        alert("DEBUG: Token = " + (token ? token.substring(0, 20) + "..." : "NULL"));
 
         if (token && user.email) {
             await setDoc(doc(db, "admin_tokens", token), {
@@ -80,12 +77,10 @@ export default function Login() {
                 device: navigator.userAgent,
                 lastLogin: serverTimestamp()
             });
-            console.log("7. Token saved to Firestore!");
-        } else {
-            console.warn("No token received or no email");
+            alert("DEBUG: Saved to Firestore!");
         }
-    } catch (err) {
-        console.error("FULL notification error:", err);
+    } catch (err: any) {
+        alert("DEBUG ERROR: " + err.message);
     }
 };
 

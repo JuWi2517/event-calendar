@@ -6,8 +6,8 @@ import {
     GoogleAuthProvider
 } from "firebase/auth";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db, app } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
 import '../css/Auth.css';
 
@@ -42,48 +42,6 @@ export default function Login() {
         };
     }, []);
 
-    // Pomocná funkce pro registraci notifikací (aby se kód neopakoval)
-    const registerAdminNotifications = async (user: any) => {
-    try {
-        if (!('Notification' in window)) {
-            alert("DEBUG: Notification API not available");
-            return;
-        }
-
-        const permission = await Notification.requestPermission();
-        alert("DEBUG: Permission = " + permission);
-
-        if (permission !== 'granted') return;
-
-        const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        await navigator.serviceWorker.ready;
-        alert("DEBUG: Service Worker ready");
-
-        const { getMessaging, getToken } = await import('firebase/messaging');
-        const messaging = getMessaging(app);
-
-        const token = await getToken(messaging, {
-            vapidKey: import.meta.env.VITE_VAPID_KEY,
-            serviceWorkerRegistration: swRegistration
-        });
-
-        alert("DEBUG: Token = " + (token ? token.substring(0, 20) + "..." : "NULL"));
-
-        if (token && user.email) {
-            await setDoc(doc(db, "admin_tokens", token), {
-                token: token,
-                email: user.email,
-                uid: user.uid,
-                device: navigator.userAgent,
-                lastLogin: serverTimestamp()
-            });
-            alert("DEBUG: Saved to Firestore!");
-        }
-    } catch (err: any) {
-        alert("DEBUG ERROR: " + err.message);
-    }
-};
-
     const handleClaimEvent = async (uid: string) => {
         const claimId = location.state?.claimEventId;
         if (claimId) {
@@ -106,9 +64,6 @@ export default function Login() {
             await handleClaimEvent(userCredential.user.uid);
 
             if (checkIsAdmin(userCredential.user)) {
-                // NOVÉ: Registrace notifikací pro email/heslo
-                await registerAdminNotifications(userCredential.user);
-
                 navigate('/admin/dashboard');
             } else {
                 navigate('/moje-akce');
@@ -130,9 +85,6 @@ export default function Login() {
             await handleClaimEvent(result.user.uid);
 
             if (checkIsAdmin(result.user)) {
-                // NOVÉ: Registrace notifikací pro Google login
-                await registerAdminNotifications(result.user);
-
                 navigate('/admin/dashboard');
             } else {
                 navigate('/moje-akce');

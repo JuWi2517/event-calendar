@@ -586,19 +586,23 @@ export default function AdminDashboard() {
     style={{ marginBottom: '1rem', padding: '10px 20px', background: '#4285F4', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
     onClick={async () => {
         try {
-            if (!('Notification' in window)) {
-                alert("DEBUG: Notification API not available");
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                alert("Notifikace nejsou na tomto zařízení podporovány.");
                 return;
             }
 
             const permission = await Notification.requestPermission();
-            alert("DEBUG: Permission = " + permission);
+            if (permission !== 'granted') {
+                alert("Notifikace byly zamítnuty.");
+                return;
+            }
 
-            if (permission !== 'granted') return;
-
-            const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            // Reuse existing SW or register new one
+            let swRegistration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+            if (!swRegistration) {
+                swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            }
             await navigator.serviceWorker.ready;
-            alert("DEBUG: Service Worker ready");
 
             const { getMessaging, getToken } = await import('firebase/messaging');
             const messaging = getMessaging(app);
@@ -607,8 +611,6 @@ export default function AdminDashboard() {
                 vapidKey: import.meta.env.VITE_VAPID_KEY,
                 serviceWorkerRegistration: swRegistration
             });
-
-            alert("DEBUG: Token = " + (token ? token.substring(0, 20) + "..." : "NULL"));
 
             if (token) {
                 const auth = (await import('firebase/auth')).getAuth();
@@ -620,10 +622,11 @@ export default function AdminDashboard() {
                     device: navigator.userAgent,
                     lastLogin: serverTimestamp()
                 });
-                alert("DEBUG: Saved to Firestore!");
+                alert("Notifikace byly úspěšně zapnuty!");
             }
         } catch (err: any) {
-            alert("DEBUG ERROR: " + err.message);
+            console.error(err);
+            alert("Chyba při zapínání notifikací.");
         }
     }}
 >

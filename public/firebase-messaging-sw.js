@@ -7,7 +7,7 @@ firebase.initializeApp({
   projectId: "culture-calendar-4747b",
   storageBucket: "culture-calendar-4747b.firebasestorage.app",
   messagingSenderId: "429183091950",
-  appId: "1:429183091950:web:"
+  appId: "1:429183091950:web:3bccdde2029247bb63dfff"
 });
 
 const messaging = firebase.messaging();

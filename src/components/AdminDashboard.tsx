@@ -117,6 +117,43 @@ export default function AdminDashboard() {
     }, []);
 
     // ========================================================================
+    // Admin token refresh for push notifications
+    // ========================================================================
+    useEffect(() => {
+    const refreshToken = async () => {
+        try {
+            const { getAuth } = await import('firebase/auth');
+            const auth = getAuth();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+            if (!swReg) return;
+
+            const { getMessaging, getToken } = await import('firebase/messaging');
+            const messaging = getMessaging(app);
+            const token = await getToken(messaging, {
+                vapidKey: import.meta.env.VITE_VAPID_KEY,
+                serviceWorkerRegistration: swReg
+            });
+
+            if (token) {
+                await setDoc(doc(db, "admin_tokens", token), {
+                    token,
+                    email: user.email || 'unknown',
+                    uid: user.uid,
+                    device: navigator.userAgent,
+                    lastRefresh: serverTimestamp()
+                }, { merge: true });
+            }
+        } catch (e) {
+            console.error("Token refresh failed:", e);
+        }
+    };
+
+    refreshToken();
+}, []);
+    // ========================================================================
     // Modal Handlers
     // ========================================================================
 
@@ -583,54 +620,64 @@ export default function AdminDashboard() {
             <h2 className="admin-title">Správa událostí</h2>
 
 <button
-    style={{ marginBottom: '1rem', padding: '10px 20px', background: '#4285F4', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-    onClick={async () => {
-        try {
-            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                alert("Notifikace nejsou na tomto zařízení podporovány.");
-                return;
-            }
+  style={{ marginBottom: '1rem', padding: '10px 20px', background: '#4285F4', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+  onClick={async () => {
+    try {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        alert("Notifikace nejsou na tomto zařízení podporovány.");
+        return;
+      }
 
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                alert("Notifikace byly zamítnuty.");
-                return;
-            }
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert("Notifikace byly zamítnuty.");
+        return;
+      }
 
-            // Reuse existing SW or register new one
-            let swRegistration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
-            if (!swRegistration) {
-                swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-            }
-            await navigator.serviceWorker.ready;
+      // Always register fresh to pick up SW updates
+      const swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        updateViaCache: 'none'
+      });
+      await navigator.serviceWorker.ready;
 
-            const { getMessaging, getToken } = await import('firebase/messaging');
-            const messaging = getMessaging(app);
+      // Force activate waiting SW if there's an update
+      if (swRegistration.waiting) {
+        swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
 
-            const token = await getToken(messaging, {
-                vapidKey: import.meta.env.VITE_VAPID_KEY,
-                serviceWorkerRegistration: swRegistration
-            });
+      const { getMessaging, getToken } = await import('firebase/messaging');
+      const messaging = getMessaging(app);
 
-            if (token) {
-                const auth = (await import('firebase/auth')).getAuth();
-                const user = auth.currentUser;
-                await setDoc(doc(db, "admin_tokens", token), {
-                    token: token,
-                    email: user?.email || 'unknown',
-                    uid: user?.uid || 'unknown',
-                    device: navigator.userAgent,
-                    lastLogin: serverTimestamp()
-                });
-                alert("Notifikace byly úspěšně zapnuty!");
-            }
-        } catch (err: any) {
-            console.error(err);
-            alert("Chyba při zapínání notifikací.");
-        }
-    }}
+      const token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_VAPID_KEY,
+        serviceWorkerRegistration: swRegistration
+      });
+
+      if (token) {
+        const auth = (await import('firebase/auth')).getAuth();
+        const user = auth.currentUser;
+
+        // Use token as doc ID — natural dedup
+        await setDoc(doc(db, "admin_tokens", token), {
+          token,
+          email: user?.email || 'unknown',
+          uid: user?.uid || 'unknown',
+          device: navigator.userAgent,
+          createdAt: serverTimestamp(),
+          lastRefresh: serverTimestamp()
+        });
+
+        alert("Notifikace byly úspěšně zapnuty!");
+      } else {
+        alert("Nepodařilo se získat token. Zkuste to znovu.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Chyba při zapínání notifikací: " + err.message);
+    }
+  }}
 >
-    Povolit notifikace
+  Povolit notifikace
 </button>
 
             {/* Pending Submissions */}

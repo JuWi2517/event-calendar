@@ -148,7 +148,14 @@ export default function HostDashboard() {
         setEditedCollection(from);
         setNewImage(null);
         setModalOpen(true);
-        setPriceType(item.price && item.price !== '' && item.price !== '0' ? 'priced' : 'free');
+
+        const hasPricedValue = item.price && item.price !== '' && item.price !== '0';
+        if (hasPricedValue) {
+            setPriceType('priced');
+        } else {
+            setPriceType('free');
+        }
+
         resetLocationState();
     }
 
@@ -186,7 +193,12 @@ export default function HostDashboard() {
 
     async function deleteEvent(id: string, from: CollectionType) {
         // Get the correct list based on collection type
-        const list = from === 'submissions' ? pending : approved;
+        let list: EventWithId[];
+        if (from === 'submissions') {
+            list = pending;
+        } else {
+            list = approved;
+        }
 
         // Find the event
         const item = list.find((event) => event.id === id);
@@ -220,7 +232,12 @@ export default function HostDashboard() {
                 });
             }
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            let errorMessage: string;
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = String(error);
+            }
             alert('Mazání selhalo: ' + errorMessage);
         }
     }
@@ -444,6 +461,13 @@ export default function HostDashboard() {
     // Render Helpers
     // ========================================================================
 
+    function renderTimeDisplay(item: EventWithId): string {
+        if (item.end) {
+            return `${item.start} - ${item.end}`;
+        }
+        return item.start;
+    }
+
     function renderEventCard(item: EventWithId, type: CollectionType) {
         function handleCardClick() {
             openEditModal(item, type);
@@ -477,9 +501,7 @@ export default function HostDashboard() {
                         {item.start && (
                             <div className="card-row">
                                 <IconClock />
-                                <span>
-                                    {item.end ? `${item.start} - ${item.end}` : item.start}
-                                </span>
+                                <span>{renderTimeDisplay(item)}</span>
                             </div>
                         )}
 
@@ -524,6 +546,52 @@ export default function HostDashboard() {
                 </div>
             </article>
         );
+    }
+
+    // ========================================================================
+    // Modal Field Helpers
+    // ========================================================================
+
+    function getSelectedStartDate(): Date | null {
+        if (editedEvent?.startDate) {
+            return new Date(editedEvent.startDate);
+        }
+        return null;
+    }
+
+    function getSelectedEndDate(): Date | null {
+        if (editedEvent?.endDate) {
+            return new Date(editedEvent.endDate);
+        }
+        return null;
+    }
+
+    function getSelectedStartTime(): Date | null {
+        if (editedEvent?.start) {
+            return new Date(`1970-01-01T${editedEvent.start}`);
+        }
+        return null;
+    }
+
+    function getSelectedEndTime(): Date | null {
+        if (editedEvent?.end) {
+            return new Date(`1970-01-01T${editedEvent.end}`);
+        }
+        return null;
+    }
+
+    function getSaveButtonText(): string {
+        if (isSaving) {
+            return 'Ukládám...';
+        }
+        return 'Uložit změny';
+    }
+
+    function getLocationClassName(): string {
+        if (locationError) {
+            return 'input-error';
+        }
+        return '';
     }
 
     // ========================================================================
@@ -587,21 +655,9 @@ export default function HostDashboard() {
                             <div className="field">
                                 <label>Datum:</label>
                                 <ReactDatePicker
-                                    selected={
-                                        editedEvent.startDate
-                                            ? new Date(editedEvent.startDate)
-                                            : null
-                                    }
-                                    startDate={
-                                        editedEvent.startDate
-                                            ? new Date(editedEvent.startDate)
-                                            : null
-                                    }
-                                    endDate={
-                                        editedEvent.endDate
-                                            ? new Date(editedEvent.endDate)
-                                            : null
-                                    }
+                                    selected={getSelectedStartDate()}
+                                    startDate={getSelectedStartDate()}
+                                    endDate={getSelectedEndDate()}
                                     onChange={handleDateChange}
                                     selectsRange
                                     dateFormat="dd.MM.yyyy"
@@ -616,11 +672,7 @@ export default function HostDashboard() {
                             <div className="field">
                                 <label>Čas začátku:</label>
                                 <ReactDatePicker
-                                    selected={
-                                        editedEvent.start
-                                            ? new Date(`1970-01-01T${editedEvent.start}`)
-                                            : null
-                                    }
+                                    selected={getSelectedStartTime()}
                                     onChange={handleStartTimeChange}
                                     showTimeSelect
                                     showTimeSelectOnly
@@ -638,11 +690,7 @@ export default function HostDashboard() {
                             <div className="field">
                                 <label>Čas konce:</label>
                                 <ReactDatePicker
-                                    selected={
-                                        editedEvent.end
-                                            ? new Date(`1970-01-01T${editedEvent.end}`)
-                                            : null
-                                    }
+                                    selected={getSelectedEndTime()}
                                     onChange={handleEndTimeChange}
                                     showTimeSelect
                                     showTimeSelectOnly
@@ -711,7 +759,7 @@ export default function HostDashboard() {
                                 <input
                                     value={editedEvent.location || ''}
                                     onChange={(inputEvent) => handleLocationChange(inputEvent.target.value)}
-                                    className={locationError ? 'input-error' : ''}
+                                    className={getLocationClassName()}
                                 />
                                 {locationError && (
                                     <div className="validation-error">
@@ -792,7 +840,7 @@ export default function HostDashboard() {
                                 onClick={() => void saveChanges()}
                                 disabled={isSaving || isCompressing}
                             >
-                                {isSaving ? 'Ukládám...' : 'Uložit změny'}
+                                {getSaveButtonText()}
                             </button>
                             <button className="btn ghost" onClick={closeModal}>
                                 Zavřít

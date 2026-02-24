@@ -42,6 +42,76 @@
     padding:2px 10px; border-radius:999px; font-size:.85rem;
 }
 
+/* --- SEARCH BAR --- */
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 480px;
+    margin-bottom: 8px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.search-input {
+    width: 100%;
+    background: var(--card2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 40px 12px 42px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.search-input::placeholder {
+    color: #8e96a4;
+}
+
+.search-input:focus {
+    border-color: rgba(209, 177, 90, 0.5);
+    box-shadow: 0 0 0 4px rgba(209, 177, 90, 0.12);
+}
+
+.search-clear {
+    position: absolute;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: background .15s ease, color .15s ease;
+}
+
+.search-clear:hover {
+    background: var(--line);
+    color: var(--text);
+}
+
+.search-empty {
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 16px 0;
+    text-align: center;
+}
+
 /* --- GRID & CARDS --- */
 .cards-grid{
     display:grid;

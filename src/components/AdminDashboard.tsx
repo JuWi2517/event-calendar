@@ -60,6 +60,9 @@ export default function AdminDashboard() {
     const [pending, setPending] = useState<EventWithId[]>([]);
     const [approved, setApproved] = useState<EventWithId[]>([]);
 
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [editedEvent, setEditedEvent] = useState<EventWithId | null>(null);
@@ -83,6 +86,30 @@ export default function AdminDashboard() {
         setLocationError,
         resetLocationState,
     } = useLocationAutocomplete();
+
+    // ========================================================================
+    // Filtered Lists
+    // ========================================================================
+
+    const normalizedSearch = searchQuery.toLowerCase().trim();
+
+    let filteredPending: EventWithId[];
+    if (normalizedSearch) {
+        filteredPending = pending.filter((event) =>
+            (event.title || '').toLowerCase().includes(normalizedSearch)
+        );
+    } else {
+        filteredPending = pending;
+    }
+
+    let filteredApproved: EventWithId[];
+    if (normalizedSearch) {
+        filteredApproved = approved.filter((event) =>
+            (event.title || '').toLowerCase().includes(normalizedSearch)
+        );
+    } else {
+        filteredApproved = approved;
+    }
 
     // ========================================================================
     // Data Loading
@@ -162,7 +189,14 @@ export default function AdminDashboard() {
         setEditedCollection(from);
         setNewImage(null);
         setModalOpen(true);
-        setPriceType(item.price && item.price !== '' && item.price !== '0' ? 'priced' : 'free');
+
+        const hasPricedValue = item.price && item.price !== '' && item.price !== '0';
+        if (hasPricedValue) {
+            setPriceType('priced');
+        } else {
+            setPriceType('free');
+        }
+
         resetLocationState();
     }
 
@@ -280,7 +314,12 @@ export default function AdminDashboard() {
 
     async function deleteEvent(id: string, from: CollectionType) {
         // Get the correct list based on collection type
-        const list = from === 'submissions' ? pending : approved;
+        let list: EventWithId[];
+        if (from === 'submissions') {
+            list = pending;
+        } else {
+            list = approved;
+        }
 
         // Find the event
         const item = list.find((event) => event.id === id);
@@ -314,7 +353,12 @@ export default function AdminDashboard() {
                 });
             }
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
+            let errorMessage: string;
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = String(error);
+            }
             alert('Mazání selhalo: ' + errorMessage);
         }
     }
@@ -517,6 +561,13 @@ export default function AdminDashboard() {
     // Render Helpers
     // ========================================================================
 
+    function renderTimeDisplay(item: EventWithId) {
+        if (item.end) {
+            return `${item.start} - ${item.end}`;
+        }
+        return item.start;
+    }
+
     function renderEventCard(item: EventWithId, type: CollectionType) {
         function handleCardClick() {
             openEditModal(item, type);
@@ -537,6 +588,21 @@ export default function AdminDashboard() {
             void deleteEvent(item.id, type);
         }
 
+        function renderActionButton() {
+            if (type === 'submissions') {
+                return (
+                    <button className="btn approve" onClick={handleApproveClick}>
+                        Schválit
+                    </button>
+                );
+            }
+            return (
+                <button className="btn neutral" onClick={handleUnapproveClick}>
+                    Vrátit mezi neschválené
+                </button>
+            );
+        }
+
         return (
             <article key={item.id} className="card" onClick={handleCardClick}>
                 {item.posterUrl && (
@@ -555,9 +621,7 @@ export default function AdminDashboard() {
                         {item.start && (
                             <div className="card-row">
                                 <IconClock />
-                                <span>
-                                    {item.end ? `${item.start} - ${item.end}` : item.start}
-                                </span>
+                                <span>{renderTimeDisplay(item)}</span>
                             </div>
                         )}
 
@@ -592,15 +656,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="actions">
-                        {type === 'submissions' ? (
-                            <button className="btn approve" onClick={handleApproveClick}>
-                                Schválit
-                            </button>
-                        ) : (
-                            <button className="btn neutral" onClick={handleUnapproveClick}>
-                                Vrátit mezi neschválené
-                            </button>
-                        )}
+                        {renderActionButton()}
 
                         <button className="btn delete" onClick={handleDeleteClick}>
                             Smazat
@@ -609,6 +665,52 @@ export default function AdminDashboard() {
                 </div>
             </article>
         );
+    }
+
+    // ========================================================================
+    // Modal Field Helpers
+    // ========================================================================
+
+    function getSelectedStartDate(): Date | null {
+        if (editedEvent?.startDate) {
+            return new Date(editedEvent.startDate);
+        }
+        return null;
+    }
+
+    function getSelectedEndDate(): Date | null {
+        if (editedEvent?.endDate) {
+            return new Date(editedEvent.endDate);
+        }
+        return null;
+    }
+
+    function getSelectedStartTime(): Date | null {
+        if (editedEvent?.start) {
+            return new Date(`1970-01-01T${editedEvent.start}`);
+        }
+        return null;
+    }
+
+    function getSelectedEndTime(): Date | null {
+        if (editedEvent?.end) {
+            return new Date(`1970-01-01T${editedEvent.end}`);
+        }
+        return null;
+    }
+
+    function getSaveButtonText(): string {
+        if (isSaving) {
+            return 'Ukládám...';
+        }
+        return 'Uložit změny';
+    }
+
+    function getLocationClassName(): string {
+        if (locationError) {
+            return 'input-error';
+        }
+        return '';
     }
 
     // ========================================================================
@@ -680,26 +782,56 @@ export default function AdminDashboard() {
   Povolit notifikace
 </button>
 
+            {/* Search Bar */}
+            <div className="search-bar">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Hledat události podle názvu..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                    <button
+                        className="search-clear"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Vymazat hledání"
+                    >
+                        ×
+                    </button>
+                )}
+            </div>
+
             {/* Pending Submissions */}
             <section className="admin-section">
                 <div className="admin-section-head">
                     <h3>Neschválené návrhy</h3>
-                    <span className="pill">{pending.length}</span>
+                    <span className="pill">{filteredPending.length}</span>
                 </div>
                 <div className="cards-grid">
-                    {pending.map((event) => renderEventCard(event, 'submissions'))}
+                    {filteredPending.map((event) => renderEventCard(event, 'submissions'))}
                 </div>
+                {normalizedSearch && filteredPending.length === 0 && (
+                    <p className="search-empty">Žádné neschválené návrhy neodpovídají hledání.</p>
+                )}
             </section>
 
             {/* Approved Events */}
             <section className="admin-section">
                 <div className="admin-section-head">
                     <h3>Schválené události</h3>
-                    <span className="pill">{approved.length}</span>
+                    <span className="pill">{filteredApproved.length}</span>
                 </div>
                 <div className="cards-grid">
-                    {approved.map((event) => renderEventCard(event, 'events'))}
+                    {filteredApproved.map((event) => renderEventCard(event, 'events'))}
                 </div>
+                {normalizedSearch && filteredApproved.length === 0 && (
+                    <p className="search-empty">Žádné schválené události neodpovídají hledání.</p>
+                )}
             </section>
 
             {/* Edit Modal */}
@@ -728,21 +860,9 @@ export default function AdminDashboard() {
                             <div className="field">
                                 <label>Datum</label>
                                 <ReactDatePicker
-                                    selected={
-                                        editedEvent.startDate
-                                            ? new Date(editedEvent.startDate)
-                                            : null
-                                    }
-                                    startDate={
-                                        editedEvent.startDate
-                                            ? new Date(editedEvent.startDate)
-                                            : null
-                                    }
-                                    endDate={
-                                        editedEvent.endDate
-                                            ? new Date(editedEvent.endDate)
-                                            : null
-                                    }
+                                    selected={getSelectedStartDate()}
+                                    startDate={getSelectedStartDate()}
+                                    endDate={getSelectedEndDate()}
                                     onChange={handleDateChange}
                                     selectsRange
                                     dateFormat="dd.MM.yyyy"
@@ -757,11 +877,7 @@ export default function AdminDashboard() {
                             <div className="field">
                                 <label>Čas začátku</label>
                                 <ReactDatePicker
-                                    selected={
-                                        editedEvent.start
-                                            ? new Date(`1970-01-01T${editedEvent.start}`)
-                                            : null
-                                    }
+                                    selected={getSelectedStartTime()}
                                     onChange={handleStartTimeChange}
                                     showTimeSelect
                                     showTimeSelectOnly
@@ -779,11 +895,7 @@ export default function AdminDashboard() {
                             <div className="field">
                                 <label>Čas konce</label>
                                 <ReactDatePicker
-                                    selected={
-                                        editedEvent.end
-                                            ? new Date(`1970-01-01T${editedEvent.end}`)
-                                            : null
-                                    }
+                                    selected={getSelectedEndTime()}
                                     onChange={handleEndTimeChange}
                                     showTimeSelect
                                     showTimeSelectOnly
@@ -852,7 +964,7 @@ export default function AdminDashboard() {
                                 <input
                                     value={editedEvent.location || ''}
                                     onChange={(inputEvent) => handleLocationChange(inputEvent.target.value)}
-                                    className={locationError ? 'input-error' : ''}
+                                    className={getLocationClassName()}
                                 />
                                 {locationError && (
                                     <div className="validation-error">
@@ -933,7 +1045,7 @@ export default function AdminDashboard() {
                                 onClick={() => void saveChanges()}
                                 disabled={isSaving || isCompressing}
                             >
-                                {isSaving ? 'Ukládám...' : 'Uložit změny'}
+                                {getSaveButtonText()}
                             </button>
                             <button className="btn ghost" onClick={closeModal}>
                                 Zavřít

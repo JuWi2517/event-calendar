@@ -207,9 +207,20 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 const dataAddress = await responseAddress.json();
                 const dataStreet = await responseStreet.json();
 
-                const itemsPoi = Array.isArray(dataPoi.items) ? dataPoi.items : [];
-                const itemsAddress = Array.isArray(dataAddress.items) ? dataAddress.items : [];
-                const itemsStreet = Array.isArray(dataStreet.items) ? dataStreet.items : [];
+                let itemsPoi: MapyApiItem[] = [];
+                if (Array.isArray(dataPoi.items)) {
+                    itemsPoi = dataPoi.items;
+                }
+
+                let itemsAddress: MapyApiItem[] = [];
+                if (Array.isArray(dataAddress.items)) {
+                    itemsAddress = dataAddress.items;
+                }
+
+                let itemsStreet: MapyApiItem[] = [];
+                if (Array.isArray(dataStreet.items)) {
+                    itemsStreet = dataStreet.items;
+                }
                 const allItems = [...itemsPoi, ...itemsAddress, ...itemsStreet];
 
                 if (allItems.length > 0) {
@@ -462,6 +473,11 @@ export default function EventForm({ onSuccess }: EventFormProps) {
             const startDateString = toLocalDateString(form.startDate);
             const endDateString = toLocalDateString(form.endDate || form.startDate);
 
+            let hostId: string | null = null;
+            if (user) {
+                hostId = user.uid;
+            }
+
             const newEvent: Omit<Event, 'id'> & {
                 posterPath: string;
                 resizedPosterPath: string;
@@ -483,7 +499,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 status: 'pending',
                 lat: form.lat,
                 lng: form.lng,
-                hostId: user ? user.uid : null,
+                hostId: hostId,
             };
 
             // Save to Firestore
@@ -520,6 +536,59 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
     function handleLoginRedirect() {
         navigate('/prihlaseni', { state: { claimEventId: createdEventId } });
+    }
+
+    // ========================================================================
+    // Helper functions for computed values
+    // ========================================================================
+
+    function getSelectedStartTime(): Date | null {
+        if (form.start) {
+            return new Date(`1970-01-01T${form.start}`);
+        }
+        return null;
+    }
+
+    function getSelectedEndTime(): Date | null {
+        if (form.end) {
+            return new Date(`1970-01-01T${form.end}`);
+        }
+        return null;
+    }
+
+    function getDatePickerClassName(): string {
+        if (dateError) {
+            return 'date-picker input-error';
+        }
+        return 'date-picker';
+    }
+
+    function getStartTimeClassName(): string {
+        if (timeError) {
+            return 'date-picker input-error';
+        }
+        return 'date-picker';
+    }
+
+    function getEndTimeClassName(): string {
+        if (endTimeError) {
+            return 'date-picker input-error';
+        }
+        return 'date-picker';
+    }
+
+    function getLocationClassName(): string {
+        if (locationError) {
+            return 'input-error';
+        }
+        return '';
+    }
+
+    function getSubmitButtonText(): string {
+        if (isSubmitting) {
+            return 'Odesílám...';
+        }
+        return 'Odeslat';
     }
 
     // ========================================================================
@@ -715,7 +784,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     placeholderText="Vyberte datum"
                     customInput={
                         <DatePickerCustomInput
-                            className={`date-picker ${dateError ? 'input-error' : ''}`}
+                            className={getDatePickerClassName()}
                         />
                     }
                     isClearable
@@ -729,7 +798,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 {/* Start Time */}
                 <label>Čas začátku: *</label>
                 <ReactDatePicker
-                    selected={form.start ? new Date(`1970-01-01T${form.start}`) : null}
+                    selected={getSelectedStartTime()}
                     onChange={handleStartTimeChange}
                     locale="cs"
                     showTimeSelect
@@ -740,7 +809,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     placeholderText="Vyberte čas začátku"
                     customInput={
                         <DatePickerCustomInput
-                            className={`date-picker ${timeError ? 'input-error' : ''}`}
+                            className={getStartTimeClassName()}
                         />
                     }
                     isClearable
@@ -754,7 +823,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 {/* End Time */}
                 <label>Čas konce:</label>
                 <ReactDatePicker
-                    selected={form.end ? new Date(`1970-01-01T${form.end}`) : null}
+                    selected={getSelectedEndTime()}
                     onChange={handleEndTimeChange}
                     locale="cs"
                     showTimeSelect
@@ -765,7 +834,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     placeholderText="Vyberte čas konce"
                     customInput={
                         <DatePickerCustomInput
-                            className={`date-picker ${endTimeError ? 'input-error' : ''}`}
+                            className={getEndTimeClassName()}
                         />
                     }
                     isClearable
@@ -784,7 +853,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     onChange={handleInputChange}
                     autoComplete="off"
                     required
-                    className={locationError ? 'input-error' : ''}
+                    className={getLocationClassName()}
                 />
                 {locationError && (
                     <div className="validation-error">
@@ -864,7 +933,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
                 {/* Submit */}
                 <button type="submit" disabled={isSubmitting || isCompressing}>
-                    {isSubmitting ? 'Odesílám...' : 'Odeslat'}
+                    {getSubmitButtonText()}
                 </button>
             </form>
 

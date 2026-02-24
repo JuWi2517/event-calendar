@@ -146,6 +146,13 @@ function isDateInEventRange(
     return normalizedFilter >= eventStart && normalizedFilter <= eventEnd;
 }
 
+function formatPriceDisplay(price: string | undefined): string {
+    if (price) {
+        return `${price} Kč`;
+    }
+    return 'Dobrovolné';
+}
+
 // ============================================================================
 // Components
 // ============================================================================
@@ -292,7 +299,12 @@ export default function CalendarView() {
         const currentMonth = today.getMonth();
 
         // If selected month is before current month, assume next year
-        const targetYear = monthIndex < currentMonth ? currentYear + 1 : currentYear;
+        let targetYear: number;
+        if (monthIndex < currentMonth) {
+            targetYear = currentYear + 1;
+        } else {
+            targetYear = currentYear;
+        }
 
         return new Date(targetYear, monthIndex, 1);
     }
@@ -408,7 +420,7 @@ export default function CalendarView() {
 
                     <p>
                         <CoinsIcon size={16} />
-                        {event.price ? `${event.price} Kč` : 'Dobrovolné'}
+                        {formatPriceDisplay(event.price)}
                     </p>
 
                     {event.category && (
@@ -514,7 +526,7 @@ export default function CalendarView() {
                     {renderLocationLink(modalEvent)}
 
                     <p>
-                        <CoinsIcon size={16} /> {modalEvent.price ? `${modalEvent.price} Kč` : 'Dobrovolné'}
+                        <CoinsIcon size={16} /> {formatPriceDisplay(modalEvent.price)}
                     </p>
 
                     {modalEvent.category && (
@@ -555,19 +567,24 @@ export default function CalendarView() {
 
     const sortedMonthKeys = Object.keys(eventsByMonth).sort();
 
+    function renderContent() {
+        if (loading) {
+            return (
+                <>
+                    <SkeletonGrid />
+                    <SkeletonGrid />
+                </>
+            );
+        }
+        return sortedMonthKeys.map((monthKey) => renderMonthGroup(monthKey));
+    }
+
     return (
         <div className="calendar-view">
             <div className="cv-container">
                 {renderFilterBar()}
 
-                {loading ? (
-                    <>
-                        <SkeletonGrid />
-                        <SkeletonGrid />
-                    </>
-                ) : (
-                    sortedMonthKeys.map((monthKey) => renderMonthGroup(monthKey))
-                )}
+                {renderContent()}
 
                 {renderModal()}
             </div>

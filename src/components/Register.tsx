@@ -11,6 +11,10 @@ import { db } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
 import '../css/Auth.css';
 
+const isInAppBrowser = (): boolean => {
+    const ua = navigator.userAgent || navigator.vendor || '';
+    return /FBAN|FBAV|Instagram|Line\/|Twitter|MicroMessenger|Snapchat|TikTok/i.test(ua);
+};
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
@@ -21,13 +25,12 @@ const GoogleIcon = () => (
     </svg>
 );
 
-
-
 export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPass, setConfirmPass] = useState('');
     const [error, setError] = useState('');
+    const [showInAppModal, setShowInAppModal] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -86,13 +89,18 @@ export default function Register() {
     };
 
     const handleGoogleLogin = async () => {
+        if (isInAppBrowser()) {
+            setShowInAppModal(true);
+            return;
+        }
+
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-
             provider.setCustomParameters({
                 prompt: 'select_account'
             });
+
+            const result = await signInWithPopup(auth, provider);
 
             await handleClaimEvent(result.user.uid);
 
@@ -103,7 +111,18 @@ export default function Register() {
             }
         } catch (err: any) {
             console.error(err);
-            setError('Chyba Google přihlášení: ' + err.message);
+            setError('Chyba Google přihlášení.');
+        }
+    };
+
+    const handleOpenInBrowser = () => {
+        const url = window.location.href;
+
+        if (/android/i.test(navigator.userAgent)) {
+            window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;end`;
+        } else {
+            navigator.clipboard?.writeText(url);
+            alert('Odkaz byl zkopírován. Otevřete ho v Safari nebo Chrome.');
         }
     };
 
@@ -175,6 +194,41 @@ export default function Register() {
                     <Link to="/prihlaseni">Přihlásit se</Link>
                 </div>
             </div>
+
+            {showInAppModal && (
+                <div
+                    className="inapp-modal-overlay"
+                    onClick={() => setShowInAppModal(false)}
+                >
+                    <div
+                        className="auth-card inapp-modal-card"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className="auth-title">Google registrace</h2>
+
+                        <p className="inapp-modal-text">
+                            Prohlížeč v této aplikaci nepodporuje registraci přes Google.
+                            Otevřete stránku v běžném prohlížeči, nebo se zaregistrujte emailem a heslem.
+                        </p>
+
+                        <button
+                            type="button"
+                            className="auth-submit inapp-modal-primary"
+                            onClick={handleOpenInBrowser}
+                        >
+                            Otevřít v prohlížeči
+                        </button>
+
+                        <button
+                            type="button"
+                            className="inapp-modal-secondary"
+                            onClick={() => setShowInAppModal(false)}
+                        >
+                            Zaregistrovat se jinak
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

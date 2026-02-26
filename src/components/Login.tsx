@@ -187,68 +187,32 @@ export default function Login() {
 
             {showInAppModal && (
                 <div
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0, 0, 0, 0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000,
-                        padding: '16px',
-                    }}
+                    className="inapp-modal-overlay"
                     onClick={() => setShowInAppModal(false)}
                 >
                     <div
-                        style={{
-                            background: 'white',
-                            borderRadius: '12px',
-                            padding: '24px',
-                            maxWidth: '340px',
-                            width: '100%',
-                            textAlign: 'center',
-                        }}
+                        className="auth-card inapp-modal-card"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 style={{ margin: '0 0 8px', fontSize: '1.1em' }}>
-                            Google přihlášení není dostupné
-                        </h3>
-                        <p style={{ margin: '0 0 20px', color: '#555', fontSize: '0.9em', lineHeight: 1.5 }}>
-                            Prohlížeč v této aplikaci nepodporuje přihlášení přes Google. Otevřete stránku v běžném prohlížeči, nebo se přihlaste emailem a heslem.
+                        <h2 className="auth-title">Google přihlášení</h2>
+
+                        <p className="inapp-modal-text">
+                            Prohlížeč v této aplikaci nepodporuje přihlášení přes Google.
+                            Otevřete stránku v běžném prohlížeči, nebo se přihlaste emailem a heslem.
                         </p>
 
                         <button
                             type="button"
+                            className="auth-submit inapp-modal-primary"
                             onClick={handleOpenInBrowser}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                border: 'none',
-                                borderRadius: '8px',
-                                background: '#4285F4',
-                                color: 'white',
-                                fontSize: '0.95em',
-                                fontWeight: 500,
-                                cursor: 'pointer',
-                                marginBottom: '10px',
-                            }}
                         >
                             Otevřít v prohlížeči
                         </button>
 
                         <button
                             type="button"
+                            className="inapp-modal-secondary"
                             onClick={() => setShowInAppModal(false)}
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                background: 'transparent',
-                                fontSize: '0.95em',
-                                cursor: 'pointer',
-                                color: '#333',
-                            }}
                         >
                             Přihlásit se jinak
                         </button>

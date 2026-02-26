@@ -151,3 +151,62 @@
     color: #facc15;
     text-decoration: none;
 }
+
+/* ---------- IN-APP BROWSER MODAL ---------- */
+.inapp-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.inapp-modal-card {
+    max-width: 360px;
+    animation: modalSlideUp 0.25s ease-out;
+}
+
+.inapp-modal-text {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    text-align: center;
+    margin: 0 0 24px;
+}
+
+.inapp-modal-primary {
+    margin-top: 0;
+}
+
+.inapp-modal-secondary {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #2a3441;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.inapp-modal-secondary:hover {
+    border-color: #facc15;
+    color: #f9fafb;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

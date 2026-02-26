@@ -29,15 +29,11 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [inApp, setInApp] = useState(false);
+    const [showInAppModal, setShowInAppModal] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
     const auth = getAuth();
-
-    useEffect(() => {
-        setInApp(isInAppBrowser());
-    }, []);
 
     useEffect(() => {
         const meta = document.createElement('meta');
@@ -83,6 +79,11 @@ export default function Login() {
     };
 
     const handleGoogleLogin = async () => {
+        if (isInAppBrowser()) {
+            setShowInAppModal(true);
+            return;
+        }
+
         try {
             const provider = new GoogleAuthProvider();
             provider.setCustomParameters({
@@ -128,36 +129,14 @@ export default function Login() {
 
                 {error && <div className="validation-error">{error}</div>}
 
-                {inApp ? (
-                    <div className="auth-info" style={{ lineHeight: 1.5 }}>
-                        Pro přihlášení přes Google otevřete stránku v běžném prohlížeči (Safari, Chrome).
-                        <br />
-                        <button
-                            type="button"
-                            onClick={handleOpenInBrowser}
-                            style={{
-                                marginTop: '8px',
-                                padding: '8px 16px',
-                                cursor: 'pointer',
-                                border: '1px solid #ccc',
-                                borderRadius: '6px',
-                                background: 'white',
-                                fontSize: '0.9em'
-                            }}
-                        >
-                            Otevřít v prohlížeči
-                        </button>
-                    </div>
-                ) : (
-                    <button
-                        onClick={handleGoogleLogin}
-                        type="button"
-                        className="google-auth-btn"
-                    >
-                        <GoogleIcon />
-                        <span>Přihlásit se přes Google</span>
-                    </button>
-                )}
+                <button
+                    onClick={handleGoogleLogin}
+                    type="button"
+                    className="google-auth-btn"
+                >
+                    <GoogleIcon />
+                    <span>Přihlásit se přes Google</span>
+                </button>
 
                 <div className="auth-divider">
                     <span>nebo</span>
@@ -205,6 +184,77 @@ export default function Login() {
                     </Link>
                 </div>
             </div>
+
+            {showInAppModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '16px',
+                    }}
+                    onClick={() => setShowInAppModal(false)}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            maxWidth: '340px',
+                            width: '100%',
+                            textAlign: 'center',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 style={{ margin: '0 0 8px', fontSize: '1.1em' }}>
+                            Google přihlášení není dostupné
+                        </h3>
+                        <p style={{ margin: '0 0 20px', color: '#555', fontSize: '0.9em', lineHeight: 1.5 }}>
+                            Prohlížeč v této aplikaci nepodporuje přihlášení přes Google. Otevřete stránku v běžném prohlížeči, nebo se přihlaste emailem a heslem.
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={handleOpenInBrowser}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                background: '#4285F4',
+                                color: 'white',
+                                fontSize: '0.95em',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                marginBottom: '10px',
+                            }}
+                        >
+                            Otevřít v prohlížeči
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowInAppModal(false)}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                border: '1px solid #ddd',
+                                borderRadius: '8px',
+                                background: 'transparent',
+                                fontSize: '0.95em',
+                                cursor: 'pointer',
+                                color: '#333',
+                            }}
+                        >
+                            Přihlásit se jinak
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

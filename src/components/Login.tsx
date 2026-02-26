@@ -11,6 +11,10 @@ import { db } from '../firebase';
 import { checkIsAdmin } from '../utils/adminAuth';
 import '../css/Auth.css';
 
+const isInAppBrowser = (): boolean => {
+    const ua = navigator.userAgent || navigator.vendor || '';
+    return /FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger|Snapchat|TikTok/i.test(ua);
+};
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
@@ -25,6 +29,7 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [showInAppWarning, setShowInAppWarning] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -74,6 +79,9 @@ export default function Login() {
     };
 
     const handleGoogleLogin = async () => {
+        setError('');
+        setShowInAppWarning(false);
+
         try {
             const provider = new GoogleAuthProvider();
             provider.setCustomParameters({
@@ -91,7 +99,31 @@ export default function Login() {
             }
         } catch (err: any) {
             console.error(err);
-            setError('Chyba Google přihlášení.');
+
+            // Popup blocked or failed in an in-app browser
+            if (
+                err.code === 'auth/popup-blocked' ||
+                err.code === 'auth/popup-closed-by-browser' ||
+                err.code === 'auth/cancelled-popup-request' ||
+                isInAppBrowser()
+            ) {
+                setShowInAppWarning(true);
+            } else {
+                setError('Chyba Google přihlášení.');
+            }
+        }
+    };
+
+    const handleOpenInBrowser = () => {
+        const url = window.location.href;
+
+        // Android: intent to open in default browser
+        if (/android/i.test(navigator.userAgent)) {
+            window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;end`;
+        } else {
+            // iOS and others: copy URL and instruct user
+            navigator.clipboard?.writeText(url);
+            alert('Odkaz byl zkopírován. Otevřete ho v Safari nebo Chrome.');
         }
     };
 
@@ -107,6 +139,31 @@ export default function Login() {
                 )}
 
                 {error && <div className="validation-error">{error}</div>}
+
+                {showInAppWarning && (
+                    <div className="validation-error" style={{ lineHeight: 1.5 }}>
+                        Google přihlášení nefunguje v prohlížeči uvnitř aplikace (Instagram, Facebook apod.).
+                        <br />
+                        Otevřete tuto stránku v běžném prohlížeči (Safari, Chrome), nebo se přihlaste pomocí emailu a hesla.
+                        <br />
+                        <button
+                            type="button"
+                            onClick={handleOpenInBrowser}
+                            style={{
+                                marginTop: '8px',
+                                padding: '6px 12px',
+                                cursor: 'pointer',
+                                border: '1px solid currentColor',
+                                borderRadius: '6px',
+                                background: 'transparent',
+                                color: 'inherit',
+                                fontSize: '0.9em'
+                            }}
+                        >
+                            Otevřít v prohlížeči
+                        </button>
+                    </div>
+                )}
 
                 <button
                     onClick={handleGoogleLogin}

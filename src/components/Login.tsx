@@ -13,7 +13,7 @@ import '../css/Auth.css';
 
 const isInAppBrowser = (): boolean => {
     const ua = navigator.userAgent || navigator.vendor || '';
-    return /FBAN|FBAV|Instagram|Line|Twitter|MicroMessenger|Snapchat|TikTok/i.test(ua);
+    return /FBAN|FBAV|Instagram|Line\/|Twitter|MicroMessenger|Snapchat|TikTok/i.test(ua);
 };
 
 const GoogleIcon = () => (
@@ -29,11 +29,15 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [showInAppWarning, setShowInAppWarning] = useState(false);
+    const [inApp, setInApp] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
     const auth = getAuth();
+
+    useEffect(() => {
+        setInApp(isInAppBrowser());
+    }, []);
 
     useEffect(() => {
         const meta = document.createElement('meta');
@@ -79,9 +83,6 @@ export default function Login() {
     };
 
     const handleGoogleLogin = async () => {
-        setError('');
-        setShowInAppWarning(false);
-
         try {
             const provider = new GoogleAuthProvider();
             provider.setCustomParameters({
@@ -99,29 +100,16 @@ export default function Login() {
             }
         } catch (err: any) {
             console.error(err);
-
-            // Popup blocked or failed in an in-app browser
-            if (
-                err.code === 'auth/popup-blocked' ||
-                err.code === 'auth/popup-closed-by-browser' ||
-                err.code === 'auth/cancelled-popup-request' ||
-                isInAppBrowser()
-            ) {
-                setShowInAppWarning(true);
-            } else {
-                setError('Chyba Google přihlášení.');
-            }
+            setError('Chyba Google přihlášení.');
         }
     };
 
     const handleOpenInBrowser = () => {
         const url = window.location.href;
 
-        // Android: intent to open in default browser
         if (/android/i.test(navigator.userAgent)) {
             window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;end`;
         } else {
-            // iOS and others: copy URL and instruct user
             navigator.clipboard?.writeText(url);
             alert('Odkaz byl zkopírován. Otevřete ho v Safari nebo Chrome.');
         }
@@ -140,39 +128,36 @@ export default function Login() {
 
                 {error && <div className="validation-error">{error}</div>}
 
-                {showInAppWarning && (
-                    <div className="validation-error" style={{ lineHeight: 1.5 }}>
-                        Google přihlášení nefunguje v prohlížeči uvnitř aplikace (Instagram, Facebook apod.).
-                        <br />
-                        Otevřete tuto stránku v běžném prohlížeči (Safari, Chrome), nebo se přihlaste pomocí emailu a hesla.
+                {inApp ? (
+                    <div className="auth-info" style={{ lineHeight: 1.5 }}>
+                        Pro přihlášení přes Google otevřete stránku v běžném prohlížeči (Safari, Chrome).
                         <br />
                         <button
                             type="button"
                             onClick={handleOpenInBrowser}
                             style={{
                                 marginTop: '8px',
-                                padding: '6px 12px',
+                                padding: '8px 16px',
                                 cursor: 'pointer',
-                                border: '1px solid currentColor',
+                                border: '1px solid #ccc',
                                 borderRadius: '6px',
-                                background: 'transparent',
-                                color: 'inherit',
+                                background: 'white',
                                 fontSize: '0.9em'
                             }}
                         >
                             Otevřít v prohlížeči
                         </button>
                     </div>
+                ) : (
+                    <button
+                        onClick={handleGoogleLogin}
+                        type="button"
+                        className="google-auth-btn"
+                    >
+                        <GoogleIcon />
+                        <span>Přihlásit se přes Google</span>
+                    </button>
                 )}
-
-                <button
-                    onClick={handleGoogleLogin}
-                    type="button"
-                    className="google-auth-btn"
-                >
-                    <GoogleIcon />
-                    <span>Přihlásit se přes Google</span>
-                </button>
 
                 <div className="auth-divider">
                     <span>nebo</span>

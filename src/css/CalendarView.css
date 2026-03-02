@@ -138,7 +138,6 @@
 
 /* Šipka – identická SVG jako u select */
 .filter-bar .datepicker-button {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A0AEC0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 0.7rem center;
     background-size: 1.25em;
@@ -149,6 +148,16 @@
     flex: 1;
     min-width: 200px;
     display: flex;
+    flex-shrink: 0;
+}
+
+.filter-bar .react-datepicker__tab-loop {
+    position: absolute;
+}
+
+.filter-bar .react-datepicker__input-container {
+    display: flex;
+    width: 100%;
 }
 
 /* --- 3. Month Groups & Event Grid --- */

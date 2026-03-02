@@ -426,7 +426,6 @@ export default function CalendarView() {
                 <div className="event-header">
                     <PosterPathFinder
                         path={event.resizedPosterPath}
-                        fallbackPath={event.posterPath}
                         alt={event.title}
                         className="poster"
                         loading="lazy"
@@ -538,7 +537,6 @@ export default function CalendarView() {
                 <div className="modal" onClick={handleModalContentClick}>
                     <PosterPathFinder
                         path={modalEvent.posterPath}
-                        fallbackPath={modalEvent.posterPath}
                         alt={modalEvent.title}
                         className="modal-poster"
                         loading="eager"

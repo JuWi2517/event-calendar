@@ -271,30 +271,45 @@ export default function CalendarView() {
     // ========================================================================
 
     function filterEvents(events: Event[]): Event[] {
-        return events
-            .filter((event) => {
-                // Category filter
-                if (categoryFilter && event.category !== categoryFilter) {
-                    return false;
-                }
+    return events
+        .filter((event) => {
+            // Category filter
+            if (categoryFilter && event.category !== categoryFilter) {
+                return false;
+            }
+            return true;
+        })
+        .filter((event) => {
+            if (!monthFilter) {
                 return true;
-            })
-            .filter((event) => {
-                // Month filter
-                if (!monthFilter) {
-                    return true;
-                }
-                const eventMonth = new Date(event.startDate).getMonth();
-                return MONTH_NAMES[eventMonth] === monthFilter;
-            })
-            .filter((event) => {
-                // Date filter
-                if (!dateFilter) {
-                    return true;
-                }
-                return isDateInEventRange(dateFilter, event.startDate, event.endDate);
-            });
-    }
+            }
+            const filterMonthIndex = MONTH_NAMES.indexOf(monthFilter);
+            if (filterMonthIndex === -1) {
+                return true;
+            }
+
+            const startDate = new Date(event.startDate);
+            const endDate = new Date(event.endDate || event.startDate);
+
+            const startMonth = startDate.getFullYear() * 12 + startDate.getMonth();
+            const endMonth = endDate.getFullYear() * 12 + endDate.getMonth();
+
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            const filterYear = filterMonthIndex < currentMonth ? currentYear + 1 : currentYear;
+            const filterAbsoluteMonth = filterYear * 12 + filterMonthIndex;
+
+            return filterAbsoluteMonth >= startMonth && filterAbsoluteMonth <= endMonth;
+        })
+        .filter((event) => {
+            // Date filter — already checks the full range
+            if (!dateFilter) {
+                return true;
+            }
+            return isDateInEventRange(dateFilter, event.startDate, event.endDate);
+        });
+}
 
     // Calculate which month to open the date picker to
     function getOpenToMonth(): Date | undefined {

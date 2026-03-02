@@ -33,7 +33,6 @@
 /* Form card — centered within the container */
 .event-form-container form {
     width: 100%;
-    max-width: 520px; /* fixed readable width */
     background: linear-gradient(
             180deg,
             rgba(255, 255, 255, 0.02),

@@ -105,10 +105,23 @@ function createMonthKey(date: Date): string {
 
 function groupEventsByMonth(events: Event[]): EventsByMonth {
     const grouped: EventsByMonth = {};
+    const now = new Date();
+    const currentMonthKey = createMonthKey(now);
 
     events.forEach((event) => {
-        const date = new Date(event.startDate);
-        const key = createMonthKey(date);
+        const startDate = new Date(event.startDate);
+        const endDate = new Date(event.endDate || event.startDate);
+        const startKey = createMonthKey(startDate);
+        const endKey = createMonthKey(endDate);
+
+        // If the event spans multiple months and the current month is within range,
+        // display it in the current month instead of the start month
+        let key: string;
+        if (startKey !== endKey && currentMonthKey >= startKey && currentMonthKey <= endKey) {
+            key = currentMonthKey;
+        } else {
+            key = startKey;
+        }
 
         if (!grouped[key]) {
             grouped[key] = [];

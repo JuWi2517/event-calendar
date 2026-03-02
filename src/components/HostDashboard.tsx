@@ -451,7 +451,6 @@ export default function HostDashboard() {
         const newType = event.target.value as 'free' | 'priced';
         setPriceType(newType);
 
-        // Clear price when switching to free
         if (newType === 'free') {
             setField('price', '');
         }

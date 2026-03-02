@@ -747,8 +747,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 </p>
 
                 {/* Title */}
-                <label>Název: *</label>
+                <label htmlFor='title'>Název: *</label>
                 <input
+                    id='title'
                     type="text"
                     maxLength={60}
                     name="title"
@@ -758,8 +759,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 />
 
                 {/* Category */}
-                <label>Kategorie: *</label>
+                <label htmlFor='category'>Kategorie: *</label>
                 <select
+                    id='category'
                     name="category"
                     value={form.category}
                     onChange={handleInputChange}
@@ -773,8 +775,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 </select>
 
                 {/* Date */}
-                <label>Datum (nebo rozmezí): *</label>
+                <label htmlFor='date'>Datum (nebo rozmezí): *</label>
                 <ReactDatePicker
+                    id='date'
                     startDate={form.startDate}
                     endDate={form.endDate}
                     onChange={handleDateChange}
@@ -796,8 +799,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 )}
 
                 {/* Start Time */}
-                <label>Čas začátku: *</label>
+                <label htmlFor='startTime'>Čas začátku: *</label>
                 <ReactDatePicker
+                    id='startTime'
                     selected={getSelectedStartTime()}
                     onChange={handleStartTimeChange}
                     locale="cs"
@@ -821,8 +825,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 )}
 
                 {/* End Time */}
-                <label>Čas konce:</label>
+                <label htmlFor='endTime'>Čas konce:</label>
                 <ReactDatePicker
+                    id='endTime'
                     selected={getSelectedEndTime()}
                     onChange={handleEndTimeChange}
                     locale="cs"
@@ -846,8 +851,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 )}
 
                 {/* Location */}
-                <label>Místo: *</label>
+                <label htmlFor='location'>Místo: *</label>
                 <input
+                    id='location'
                     name="location"
                     value={form.location}
                     onChange={handleInputChange}
@@ -863,8 +869,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 {renderLocationSuggestions()}
 
                 {/* Price */}
-                <label>Vstupné:</label>
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+                <label htmlFor='price'>Vstupné:</label>
+                <div id='price' style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                         <input
                             type="radio"
@@ -897,8 +903,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 )}
 
                 {/* Organizer */}
-                <label>Pořadatel:</label>
+                <label htmlFor='organizer'>Pořadatel:</label>
                 <input
+                    id='organizer'
                     type="text"
                     name="organizer"
                     value={form.organizer}
@@ -907,8 +914,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 />
 
                 {/* Event URL */}
-                <label>Odkaz na událost:</label>
+                <label htmlFor='url'>Odkaz na událost:</label>
                 <input
+                    id='url'
                     type="url"
                     name="facebookUrl"
                     value={form.facebookUrl}
@@ -916,8 +924,9 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 />
 
                 {/* Poster */}
-                <label>Plakát:</label>
+                <label htmlFor='poster'>Plakát:</label>
                 <input
+                id='poster'
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}

@@ -373,44 +373,48 @@ export default function CalendarView() {
     // Render Helpers
     // ========================================================================
 
-    function renderFilterBar() {
-        return (
-            <div className="filter-bar">
-                {/* Category Filter */}
-                <select value={categoryFilter} onChange={handleCategoryChange}>
-                    {CATEGORY_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
+   function renderFilterBar() {
+    return (
+        <div className="filter-bar">
+            {/* Category Filter */}
+            <label htmlFor="category-filter" className="sr-only">Kategorie</label>
+            <select id="category-filter" value={categoryFilter} onChange={handleCategoryChange}>
+                {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                        {option.label}
+                    </option>
+                ))}
+            </select>
 
-                {/* Month Filter */}
-                <select value={monthFilter} onChange={handleMonthChange}>
-                    <option value="">Všechny měsíce</option>
-                    {MONTH_NAMES.map((month) => (
-                        <option key={month} value={month}>
-                            {month}
-                        </option>
-                    ))}
-                </select>
+            {/* Month Filter */}
+            <label htmlFor="month-filter" className="sr-only">Měsíc</label>
+            <select id="month-filter" value={monthFilter} onChange={handleMonthChange}>
+                <option value="">Všechny měsíce</option>
+                {MONTH_NAMES.map((month) => (
+                    <option key={month} value={month}>
+                        {month}
+                    </option>
+                ))}
+            </select>
 
-                {/* Date Filter */}
-                <ReactDatePicker
-                    locale="cs"
-                    selected={dateFilter}
-                    onChange={handleDateChange}
-                    placeholderText="Filtrovat podle dne"
-                    dateFormat="d. MMMM yyyy"
-                    isClearable
-                    openToDate={getOpenToMonth()}
-                    customInput={
-                        <DatePickerCustomInput className="react-datepicker-button" />
-                    }
-                />
-            </div>
-        );
-    }
+            {/* Date Filter */}
+            <label htmlFor="date-filter" className="sr-only">Datum</label>
+            <ReactDatePicker
+                id="date-filter"
+                locale="cs"
+                selected={dateFilter}
+                onChange={handleDateChange}
+                placeholderText="Filtrovat podle dne"
+                dateFormat="d. MMMM yyyy"
+                isClearable
+                openToDate={getOpenToMonth()}
+                customInput={
+                    <DatePickerCustomInput className="react-datepicker-button" />
+                }
+            />
+        </div>
+    );
+}
 
     function renderEventCard(event: Event) {
         function handleClick() {

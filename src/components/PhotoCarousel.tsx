@@ -40,15 +40,16 @@ export default function PhotoCarousel({
         >
             {/* 2. Add types (string, number) to map parameters */}
             {safeImages.map((src: string, i: number) => (
-                <img
-                    key={src + i}
-                    src={src}
-                    alt=""
-                    className={`hero-slide ${i === idx ? 'is-active' : ''}`}
-                    draggable={false}
-                    loading={i === 0 ? 'eager' : 'lazy'}
-                    fetchPriority={i === 0 ? 'high' : 'auto'}
-                />
+            <img
+                key={src + i}
+                src={src}
+                alt=""
+                className={`hero-slide ${i === idx ? 'is-active' : ''}`}
+                draggable={false}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+                decoding={i === 0 ? 'sync' : 'async'}
+            />
             ))}
 
             <div className="hero-overlay" />

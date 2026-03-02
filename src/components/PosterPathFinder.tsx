@@ -4,6 +4,9 @@ import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 
 const storage = getStorage(app);
 
+// Shared URL cache — persists across all component instances
+const urlCache = new Map<string, string>();
+
 interface Props {
   path: string;
   alt: string;
@@ -12,8 +15,8 @@ interface Props {
 }
 
 export default function PosterPathFinder({ path, alt, className, loading = 'lazy' }: Props) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [url, setUrl] = useState<string | null>(() => urlCache.get(path) ?? null);
+  const [isLoading, setIsLoading] = useState(() => !urlCache.has(path));
 
   useEffect(() => {
     if (!path) {
@@ -21,9 +24,15 @@ export default function PosterPathFinder({ path, alt, className, loading = 'lazy
       return;
     }
 
+    // Already cached — use it immediately
+    if (urlCache.has(path)) {
+      setUrl(urlCache.get(path)!);
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
-    // Derive resized path: strip extension, append _640x853.webp
     const lastDot = path.lastIndexOf('.');
     const resizedPath =
       lastDot !== -1
@@ -35,15 +44,16 @@ export default function PosterPathFinder({ path, alt, className, loading = 'lazy
 
     getDownloadURL(resizedRef)
       .then((downloadUrl) => {
+        urlCache.set(path, downloadUrl);
         if (isMounted) {
           setUrl(downloadUrl);
           setIsLoading(false);
         }
       })
       .catch(() => {
-        // Resized not found, fall back to original
         getDownloadURL(originalRef)
           .then((downloadUrl) => {
+            urlCache.set(path, downloadUrl);
             if (isMounted) {
               setUrl(downloadUrl);
               setIsLoading(false);

@@ -536,7 +536,7 @@ export default function CalendarView() {
             <div className="modal-backdrop" onClick={handleModalBackdropClick}>
                 <div className="modal" onClick={handleModalContentClick}>
                     <PosterPathFinder
-                        path={modalEvent.posterPath}
+                        path={modalEvent.resizedPosterPath}
                         alt={modalEvent.title}
                         className="modal-poster"
                         loading="eager"

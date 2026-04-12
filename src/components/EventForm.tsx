@@ -82,7 +82,7 @@ const INITIAL_FORM_STATE: FormState = {
     endDate: null,
     start: '',
     end: '',
-    price: '',
+    price: 'free',
     location: '',
     organizer: '',
     facebookUrl: '',
@@ -145,7 +145,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
     const [endTimeError, setEndTimeError] = useState(false);
 
     // Price type state
-    const [priceType, setPriceType] = useState<'free' | 'priced'>('free');
+    const [priceType, setPriceType] = useState<'voluntary' | 'free' | 'priced'>('free');
 
     // Refs
     const dropdownRef = useRef<HTMLUListElement>(null);
@@ -339,14 +339,15 @@ export default function EventForm({ onSuccess }: EventFormProps) {
     }
 
     function handlePriceTypeChange(event: ChangeEvent<HTMLInputElement>) {
-        const newType = event.target.value as 'free' | 'priced';
+        const newType = event.target.value as 'free' | 'priced' | 'voluntary';
         setPriceType(newType);
 
-        // Clear price when switching to free
         if (newType === 'free') {
-            updateFormField('price', '');
+            updateFormField('price', 'free');
+        } else if (newType === 'voluntary') {
+            updateFormField('price', 'voluntary');
         }
-    }
+}
 
     async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
@@ -871,27 +872,37 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                 {/* Price */}
                 <label htmlFor='price'>Vstupné:</label>
                 <div id='price' style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                        <input
-                            type="radio"
-                            name="priceType"
-                            value="free"
-                            checked={priceType === 'free'}
-                            onChange={handlePriceTypeChange}
-                        />
-                        <span>Dobrovolné</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                        <input
-                            type="radio"
-                            name="priceType"
-                            value="priced"
-                            checked={priceType === 'priced'}
-                            onChange={handlePriceTypeChange}
-                        />
-                        <span>Zpoplatněno</span>
-                    </label>
-                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                        type="radio"
+                        name="priceType"
+                        value="free"
+                        checked={priceType === 'free'}
+                        onChange={handlePriceTypeChange}
+                    />
+                    <span>Zdarma</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                        type="radio"
+                        name="priceType"
+                        value="voluntary"
+                        checked={priceType === 'voluntary'}
+                        onChange={handlePriceTypeChange}
+                    />
+                    <span>Dobrovolné</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                        type="radio"
+                        name="priceType"
+                        value="priced"
+                        checked={priceType === 'priced'}
+                        onChange={handlePriceTypeChange}
+                    />
+                    <span>Zpoplatněno</span>
+                </label>
+            </div>
                 {priceType === 'priced' && (
                     <input
                         type="number"

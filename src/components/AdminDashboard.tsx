@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     const [isCompressing, setIsCompressing] = useState(false);
 
     // Price type state
-    const [priceType, setPriceType] = useState<'free' | 'priced'>('free');
+    const [priceType, setPriceType] = useState<'free' | 'voluntary' | 'priced'>('free');
 
     // Location autocomplete
     const {
@@ -190,11 +190,12 @@ export default function AdminDashboard() {
         setNewImage(null);
         setModalOpen(true);
 
-        const hasPricedValue = item.price && item.price !== '' && item.price !== '0';
-        if (hasPricedValue) {
-            setPriceType('priced');
-        } else {
+        if (item.price === 'free') {
             setPriceType('free');
+        } else if (item.price === 'voluntary' || !item.price || item.price === '') {
+            setPriceType('voluntary');
+        } else {
+            setPriceType('priced');
         }
 
         resetLocationState();
@@ -548,12 +549,13 @@ export default function AdminDashboard() {
     }
 
     function handlePriceTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const newType = event.target.value as 'free' | 'priced';
+        const newType = event.target.value as 'free' | 'voluntary' | 'priced';
         setPriceType(newType);
 
-        // Clear price when switching to free
         if (newType === 'free') {
-            setField('price', '');
+            setField('price', 'free');
+        } else if (newType === 'voluntary') {
+            setField('price', 'voluntary');
         }
     }
 
@@ -632,12 +634,12 @@ export default function AdminDashboard() {
                             </div>
                         )}
 
-                        {item.price && (
-                            <div className="card-row">
-                                <IconPrice />
-                                <span>{item.price} Kč</span>
-                            </div>
-                        )}
+                        <div className="card-row">
+                            <IconPrice />
+                            <span>
+                                {item.price === 'free' ? 'Zdarma' : item.price === 'voluntary' || !item.price ? 'Dobrovolné' : `${item.price} Kč`}
+                            </span>
+                        </div>
 
                         {item.category && (
                             <div className="card-row">
@@ -933,6 +935,16 @@ export default function AdminDashboard() {
                                             name="priceType"
                                             value="free"
                                             checked={priceType === 'free'}
+                                            onChange={handlePriceTypeChange}
+                                        />
+                                        <span>Zdarma</span>
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <input
+                                            type="radio"
+                                            name="priceType"
+                                            value="voluntary"
+                                            checked={priceType === 'voluntary'}
                                             onChange={handlePriceTypeChange}
                                         />
                                         <span>Dobrovolné</span>

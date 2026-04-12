@@ -339,15 +339,17 @@ export default function EventForm({ onSuccess }: EventFormProps) {
     }
 
     function handlePriceTypeChange(event: ChangeEvent<HTMLInputElement>) {
-        const newType = event.target.value as 'free' | 'priced' | 'voluntary';
+        const newType = event.target.value as 'free' | 'voluntary' | 'priced';
         setPriceType(newType);
 
         if (newType === 'free') {
             updateFormField('price', 'free');
         } else if (newType === 'voluntary') {
             updateFormField('price', 'voluntary');
+        } else {
+            updateFormField('price', '');
         }
-}
+    }   
 
     async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
@@ -871,8 +873,8 @@ export default function EventForm({ onSuccess }: EventFormProps) {
 
                 {/* Price */}
                 <label htmlFor='price'>Vstupné:</label>
-                <div id='price' style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <div id='price' className="radio-group">
+                <label className="radio-label">
                     <input
                         type="radio"
                         name="priceType"
@@ -882,7 +884,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     />
                     <span>Zdarma</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <label className="radio-label">
                     <input
                         type="radio"
                         name="priceType"
@@ -892,7 +894,7 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     />
                     <span>Dobrovolné</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <label className="radio-label">
                     <input
                         type="radio"
                         name="priceType"
@@ -902,16 +904,15 @@ export default function EventForm({ onSuccess }: EventFormProps) {
                     />
                     <span>Zpoplatněno</span>
                 </label>
-            </div>
-                {priceType === 'priced' && (
-                    <input
-                        type="number"
-                        name="price"
-                        value={form.price}
-                        onChange={handleInputChange}
-                        placeholder="Cena v Kč"
-                    />
-                )}
+            </div>{priceType === 'priced' && (
+                <input
+                    type="number"
+                    name="price"
+                    value={form.price}
+                    onChange={handleInputChange}
+                    placeholder="Cena v Kč"
+                />
+            )}
 
                 {/* Organizer */}
                 <label htmlFor='organizer'>Pořadatel:</label>

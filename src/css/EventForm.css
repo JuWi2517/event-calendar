@@ -1,4 +1,4 @@
-:root{
+:root {
     --bg-body: #0f141b;          /* barva pozadí stránky (už ji asi máš) */
     --card:    #161c24;          /* panel formuláře */
     --card-2:  #1b2230;          /* hover/states */
@@ -48,14 +48,14 @@
 }
 
 /* Nadpis se zlatou linkou */
-.event-form-container h2{
+.event-form-container h2 {
     margin: 6px 0 18px;
     font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: .2px;
     text-align: center;
 }
-.event-form-container h2::after{
+.event-form-container h2::after {
     content: "";
     display: block;
     width: 120px;
@@ -63,11 +63,10 @@
     background: var(--accent);
     border-radius: 999px;
     margin: 10px auto 0;
-
 }
 
 /* Popisky */
-.event-form-container label{
+.event-form-container label {
     display: block;
     margin: 14px 0 6px;
     color: var(--muted);
@@ -77,7 +76,7 @@
 /* Vstupy */
 .event-form-container input,
 .event-form-container select,
-.event-form-container .date-picker{
+.event-form-container .date-picker {
     width: 100%;
     box-sizing: border-box;
     background: var(--card-2);
@@ -91,27 +90,107 @@
 }
 
 .event-form-container input::placeholder,
-.event-form-container .date-picker::placeholder{ color: #8e96a4; }
+.event-form-container .date-picker::placeholder { 
+    color: #8e96a4; 
+}
 
 .event-form-container input:focus,
 .event-form-container select:focus,
-.event-form-container .date-picker:focus{
+.event-form-container .date-picker:focus {
     border-color: rgba(32,12,207,.65);
     box-shadow: 0 0 0 4px rgba(32,12,207,.18);
 }
 
+/* -------------------------------------------
+   RADIO BUTTONS FIX (Vstupné)
+   ------------------------------------------- */
+
+/* Container to align the options in a row */
+.event-form-container .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 6px;
+    margin-bottom: 20px;
+}
+
+/* Label wrapper for each radio option */
+.event-form-container .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0; /* Resets the margin from your global label style */
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.event-form-container .radio-label:hover {
+    color: #ffffff;
+}
+
+/* Completely reset and custom-style the native radio input */
+.event-form-container input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: 2px solid var(--muted);
+    border-radius: 50%;
+    background-color: transparent;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease;
+}
+
+/* The inner dot that appears when checked */
+.event-form-container input[type="radio"]::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 0.2s transform ease-in-out;
+    background-color: var(--accent); /* Uses your gold accent */
+}
+
+/* Border color change when selected */
+.event-form-container input[type="radio"]:checked {
+    border-color: var(--accent);
+}
+
+/* Show the inner dot when selected */
+.event-form-container input[type="radio"]:checked::before {
+    transform: scale(1);
+}
+
+/* Focus glow effect to match your text inputs, but in gold */
+.event-form-container input[type="radio"]:focus {
+    box-shadow: 0 0 0 4px rgba(209, 177, 90, 0.15); /* Subtle gold glow */
+    border-color: var(--accent);
+}
+
+/* -------------------------------------------
+   REST OF THE FORM STYLES
+   ------------------------------------------- */
+
 /* DatePicker z knihovny – sjednocení vzhledu */
-.event-form-container .react-datepicker-wrapper{ width:100%; }
-.event-form-container .react-datepicker-popper{ z-index: 50; }
+.event-form-container .react-datepicker-wrapper { width:100%; }
+.event-form-container .react-datepicker-popper { z-index: 50; }
 
 /* Soubor (nebudu schovávat nativní, jen ho “zpaneluju”) */
-.event-form-container input[type="file"]{
+.event-form-container input[type="file"] {
     padding: 10px 12px;
     cursor: pointer;
 }
 
 /* Dropdown návrhů míst */
-.event-form-container .suggestions{
+.event-form-container .suggestions {
     list-style: none;
     margin: 6px 0 0;
     padding: 6px;
@@ -122,13 +201,13 @@
     overflow: auto;
     box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
-.event-form-container .suggestions li{
+.event-form-container .suggestions li {
     padding: 10px 12px;
     border-radius: 8px;
     cursor: pointer;
     color: var(--text);
 }
-.event-form-container .suggestions li:hover{
+.event-form-container .suggestions li:hover {
     background: rgba(255,255,255,.04);
 }
 
@@ -148,7 +227,7 @@
 }
 
 /* Hover a kliknutí */
-.form button[type="submit"]:hover {
+.event-form-container form button[type="submit"]:hover {
     background-color: #FFD700;
 }
 
@@ -162,11 +241,16 @@
     cursor: not-allowed;
 }
 
-
 /* Responsivní drobnosti – víc prostoru na větších displejích */
-@media (min-width: 900px){
-    .event-form-container{ width: min(560px, 92vw); }
-    .event-form-container form{ padding: 26px 26px 30px; }
+@media (min-width: 900px) {
+    .event-form-container { width: min(560px, 92vw); }
+    .event-form-container form { padding: 26px 26px 30px; }
+}
+
+@media (max-width: 480px) {
+    .event-form-container .radio-label:last-child {
+        flex-basis: 100%;
+    }
 }
 
 /* Error Message Text */
@@ -181,5 +265,3 @@
     font-weight: 500;
     animation: slideDown 0.2s ease-out forwards;
 }
-
-
